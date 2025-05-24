@@ -1,4 +1,4 @@
-// src/hooks/stock-movements/useStockMovements.ts (Simplified)
+// src/hooks/stock-movements/useStockMovements.ts
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,6 +7,8 @@ import { StockMovement } from "@/interfaces";
 import { validateStockMovement } from "@/utils/validation";
 
 const STOCK_MOVEMENTS_KEY = "stock-movements";
+const PRODUCTS_KEY = "products";
+const DASHBOARD_STATS_KEY = "dashboard-stats";
 
 export const useStockMovements = (startDate?: string, endDate?: string) => {
     return useQuery({
@@ -21,14 +23,9 @@ export const useStockMovements = (startDate?: string, endDate?: string) => {
                 exitsValue: number;
             };
         }> => {
-            let url = "/stock-movements";
-            if (startDate && endDate) {
-                url += `?startDate=${startDate}&endDate=${endDate}`;
-            }
-
-            return await api.getStockMovements(url);;
+            return await api.getStockMovements(startDate, endDate);
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: 2 * 60 * 1000, // 2 minutes
     });
 };
 
@@ -45,7 +42,13 @@ export const useCreateStockMovement = () => {
             return await api.createStockMovement(stockMovement);
         },
         onSuccess: () => {
+            // Invalidate related queries
             queryClient.invalidateQueries({ queryKey: [STOCK_MOVEMENTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
+        },
+        onError: (error: unknown) => {
+            console.error('Error creating stock movement:', error);
         },
     });
 };
@@ -63,7 +66,13 @@ export const useUpdateStockMovement = () => {
             return await api.updateStockMovement(id, data);
         },
         onSuccess: () => {
+            // Invalidate related queries
             queryClient.invalidateQueries({ queryKey: [STOCK_MOVEMENTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
+        },
+        onError: (error: unknown) => {
+            console.error('Error updating stock movement:', error);
         },
     });
 };
@@ -77,7 +86,13 @@ export const useDeleteStockMovement = () => {
             return id;
         },
         onSuccess: () => {
+            // Invalidate related queries
             queryClient.invalidateQueries({ queryKey: [STOCK_MOVEMENTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
+            queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
+        },
+        onError: (error: unknown) => {
+            console.error('Error deleting stock movement:', error);
         },
     });
 };

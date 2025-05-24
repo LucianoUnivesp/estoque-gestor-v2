@@ -1,8 +1,6 @@
-// src/components/stock-movements/StockMovementForm.tsx
 "use client";
 import React, { useEffect } from "react";
 import {
-  Box,
   TextField,
   Button,
   Stack,
@@ -11,18 +9,15 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
+  Alert,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { ptBR } from "date-fns/locale";
 import { StockMovement, Product } from "@/interfaces";
 
 interface StockMovementFormProps {
   open: boolean;
   initialValues?: Partial<StockMovement>;
   products: Product[];
-  onSubmit: (values: any) => void;
+  onSubmit: (values: unknown) => void;
   onClose: () => void;
   loading: boolean;
 }
@@ -40,16 +35,17 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
     quantity: 1,
     productId: undefined,
     notes: "",
-    createdAt: new Date().toISOString(),
   });
+
+  const isEditing = !!initialValues?.id;
 
   useEffect(() => {
     if (initialValues) {
       setFormValues({
-        ...initialValues,
-        createdAt: initialValues.createdAt
-          ? new Date(initialValues.createdAt).toISOString()
-          : new Date().toISOString(),
+        type: initialValues.type || "entry",
+        quantity: initialValues.quantity || 1,
+        productId: initialValues.productId,
+        notes: initialValues.notes || "",
       });
     } else {
       setFormValues({
@@ -57,7 +53,6 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
         quantity: 1,
         productId: undefined,
         notes: "",
-        createdAt: new Date().toISOString(),
       });
     }
   }, [initialValues, open]);
@@ -72,26 +67,32 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
     setFormValues((prev) => ({ ...prev, [name]: parseInt(value) || 1 }));
   };
 
-  const handleDateChange = (date: Date | null) => {
-    setFormValues((prev) => ({
-      ...prev,
-      createdAt: date ? date.toISOString() : new Date().toISOString(),
-    }));
-  };
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formValues);
   };
 
+  const selectedProduct = products.find((p) => p.id === formValues.productId);
+  const isExitWithInsufficientStock =
+    formValues.type === "exit" &&
+    selectedProduct &&
+    (formValues.quantity || 0) > selectedProduct.quantity;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {initialValues?.id ? "Editar Movimentação" : "Nova Movimentação"}
+        {isEditing ? "Editar Movimentação" : "Nova Movimentação"}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Stack spacing={3}>
+            {isEditing && (
+              <Alert severity="info">
+                Ao editar uma movimentação, o estoque do produto será ajustado
+                automaticamente.
+              </Alert>
+            )}
+
             <TextField
               name="productId"
               select
@@ -100,6 +101,7 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               onChange={handleChange}
               fullWidth
               required
+              disabled={isEditing} // Não permitir mudança de produto ao editar
             >
               {products.map((product) => (
                 <MenuItem key={product.id} value={product.id}>
@@ -107,6 +109,7 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
                 </MenuItem>
               ))}
             </TextField>
+
             <TextField
               name="type"
               select
@@ -115,10 +118,12 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               onChange={handleChange}
               fullWidth
               required
+              disabled={isEditing} // Não permitir mudança de tipo ao editar
             >
               <MenuItem value="entry">Entrada</MenuItem>
               <MenuItem value="exit">Saída</MenuItem>
             </TextField>
+
             <TextField
               name="quantity"
               label="Quantidade"
@@ -128,22 +133,14 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               fullWidth
               required
               inputProps={{ min: 1 }}
+              error={isExitWithInsufficientStock}
+              helperText={
+                isExitWithInsufficientStock
+                  ? `Estoque insuficiente. Disponível: ${selectedProduct?.quantity}`
+                  : ""
+              }
             />
-            <LocalizationProvider
-              dateAdapter={AdapterDateFns}
-              adapterLocale={ptBR}
-            >
-              <DateTimePicker
-                label="Data e Hora"
-                value={
-                  formValues.createdAt
-                    ? new Date(formValues.createdAt)
-                    : new Date()
-                }
-                onChange={handleDateChange}
-                slotProps={{ textField: { fullWidth: true } }}
-              />
-            </LocalizationProvider>
+
             <TextField
               name="notes"
               label="Observações"
@@ -152,6 +149,7 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               fullWidth
               multiline
               rows={4}
+              placeholder="Adicione observações sobre esta movimentação..."
             />
           </Stack>
         </DialogContent>
@@ -161,9 +159,15 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
             type="submit"
             variant="contained"
             color="primary"
-            disabled={loading}
+            disabled={loading || isExitWithInsufficientStock}
           >
-            {initialValues?.id ? "Atualizar" : "Salvar"}
+            {loading
+              ? isEditing
+                ? "Atualizando..."
+                : "Salvando..."
+              : isEditing
+              ? "Atualizar"
+              : "Salvar"}
           </Button>
         </DialogActions>
       </form>

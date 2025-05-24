@@ -5,6 +5,7 @@ import { ProductsController } from './constrollers/products.controller';
 import { ProductTypesController } from './constrollers/produt-types.controller';
 import { AppService } from './servicecs/app.service';
 import { StockMovementsController } from './constrollers/stock-movements.controller';
+import { DashboardController } from './constrollers/dashboard.controller';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { StockMovementsController } from './constrollers/stock-movements.control
     ProductsController,
     ProductTypesController,
     StockMovementsController,
+    DashboardController,
   ],
   providers: [AppService, SupabaseService],
 })

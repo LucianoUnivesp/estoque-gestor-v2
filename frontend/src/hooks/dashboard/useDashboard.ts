@@ -1,4 +1,3 @@
-// src/hooks/dashboard/useDashboard.ts (Simplified)
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +15,8 @@ export const useDashboardStats = () => {
         queryFn: async (): Promise<DashboardStats> => {
             return await api.getDashboardStats();
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        retry: 2,
     });
 };
 
@@ -24,10 +24,10 @@ export const useRecentMovements = () => {
     return useQuery({
         queryKey: [RECENT_MOVEMENTS_KEY],
         queryFn: async () => {
-            const response = await api.get("/dashboard/recent-movements");
-            return response.data;
+            return await api.getRecentMovements();
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 2 * 60 * 1000, // 2 minutes
+        retry: 2,
     });
 };
 
@@ -35,9 +35,9 @@ export const useStockTrend = () => {
     return useQuery({
         queryKey: [STOCK_TREND_KEY],
         queryFn: async () => {
-            const response = await api.get("/dashboard/stock-trend");
-            return response.data;
+            return await api.getStockTrend();
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 2,
     });
 };

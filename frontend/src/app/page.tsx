@@ -1,4 +1,3 @@
-// src/app/page.tsx (Fixed for SSR)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +15,7 @@ import {
   TableRow,
   Paper,
   CircularProgress,
-  // Alert,
+  Alert,
   Chip,
   IconButton,
   Tooltip,
@@ -42,69 +41,46 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import {
+  useDashboardStats,
+  useRecentMovements,
+  useStockTrend,
+} from "@/hooks/dashboard/useDashboard";
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   // Prevent hydration mismatch by only rendering charts after mount
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Mock data for demonstration
-  const displayStats = {
-    totalProducts: 25,
-    totalProductTypes: 8,
-    lowStockProducts: 3,
-    todayEntries: 12,
-    todayExits: 7,
-    todayBalance: 5,
-    todayEntriesValue: 1500.75,
-    todayExitsValue: 850.25,
-  };
+  // React Query hooks
+  const {
+    data: dashboardStats,
+    isLoading: statsLoading,
+    error: statsError,
+    refetch: refetchStats,
+  } = useDashboardStats();
 
-  const displayTrendData = [
-    { date: "01/05", entries: 50, exits: 30, balance: 20 },
-    { date: "02/05", entries: 45, exits: 35, balance: 10 },
-    { date: "03/05", entries: 60, exits: 40, balance: 20 },
-    { date: "04/05", entries: 70, exits: 50, balance: 20 },
-    { date: "05/05", entries: 55, exits: 45, balance: 10 },
-    { date: "06/05", entries: 80, exits: 60, balance: 20 },
-    { date: "07/05", entries: 90, exits: 70, balance: 20 },
-  ];
+  const {
+    data: recentMovements = [],
+    isLoading: movementsLoading,
+    error: movementsError,
+    refetch: refetchMovements,
+  } = useRecentMovements();
 
-  const recentMovements = [
-    {
-      id: 1,
-      product: { name: "Smartphone Galaxy S22" },
-      type: "entry" as const,
-      quantity: 10,
-      createdAt: "2024-05-22T10:30:00Z",
-    },
-    {
-      id: 2,
-      product: { name: "Notebook Dell XPS" },
-      type: "exit" as const,
-      quantity: 2,
-      createdAt: "2024-05-22T09:15:00Z",
-    },
-  ];
-
-  const productTypeDistribution = [
-    { name: "Eletrônicos", value: 12 },
-    { name: "Computadores", value: 8 },
-    { name: "Periféricos", value: 5 },
-  ];
-
-  const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+  const {
+    data: trendData = [],
+    isLoading: trendLoading,
+    error: trendError,
+    refetch: refetchTrend,
+  } = useStockTrend();
 
   const handleRefresh = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    refetchStats();
+    refetchMovements();
+    refetchTrend();
   };
 
   const formatDate = (dateString: string) => {
@@ -123,7 +99,16 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) {
+  // Mock data for pie chart (since we don't have this endpoint yet)
+  const productTypeDistribution = [
+    { name: "Eletrônicos", value: 12 },
+    { name: "Computadores", value: 8 },
+    { name: "Periféricos", value: 5 },
+  ];
+
+  const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+
+  if (statsLoading || movementsLoading || trendLoading) {
     return (
       <Box
         sx={{
@@ -135,6 +120,14 @@ export default function Dashboard() {
       >
         <CircularProgress />
       </Box>
+    );
+  }
+
+  if (statsError || movementsError || trendError) {
+    return (
+      <Alert severity="error">
+        Erro ao carregar dados do dashboard. Tente novamente.
+      </Alert>
     );
   }
 
@@ -169,7 +162,7 @@ export default function Dashboard() {
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <InventoryIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h5">
-                  {displayStats.totalProducts}
+                  {dashboardStats?.totalProducts || 0}
                 </Typography>
               </Box>
             </CardContent>
@@ -184,7 +177,7 @@ export default function Dashboard() {
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <CategoryIcon color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h5">
-                  {displayStats.totalProductTypes}
+                  {dashboardStats?.totalProductTypes || 0}
                 </Typography>
               </Box>
             </CardContent>
@@ -199,7 +192,7 @@ export default function Dashboard() {
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <WarningIcon sx={{ color: "#ff4d4f", mr: 1 }} />
                 <Typography variant="h5" sx={{ color: "#ff4d4f" }}>
-                  {displayStats.lowStockProducts}
+                  {dashboardStats?.lowStockProducts || 0}
                 </Typography>
               </Box>
             </CardContent>
@@ -212,7 +205,7 @@ export default function Dashboard() {
                 Saldo de Hoje
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {displayStats.todayBalance >= 0 ? (
+                {(dashboardStats?.todayBalance || 0) >= 0 ? (
                   <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
                 ) : (
                   <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
@@ -221,10 +214,12 @@ export default function Dashboard() {
                   variant="h5"
                   sx={{
                     color:
-                      displayStats.todayBalance >= 0 ? "#3f8600" : "#cf1322",
+                      (dashboardStats?.todayBalance || 0) >= 0
+                        ? "#3f8600"
+                        : "#cf1322",
                   }}
                 >
-                  {Math.abs(displayStats.todayBalance)}
+                  {Math.abs(dashboardStats?.todayBalance || 0)}
                 </Typography>
               </Box>
             </CardContent>
@@ -246,11 +241,11 @@ export default function Dashboard() {
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
                 <Typography variant="h5" sx={{ color: "#3f8600" }}>
-                  {displayStats.todayEntries} unidades
+                  {dashboardStats?.todayEntries || 0} unidades
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: "#3f8600", mt: 1 }}>
-                R$ {displayStats.todayEntriesValue.toFixed(2)}
+                R$ {(dashboardStats?.todayEntriesValue || 0).toFixed(2)}
               </Typography>
             </CardContent>
           </Card>
@@ -264,11 +259,11 @@ export default function Dashboard() {
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
                 <Typography variant="h5" sx={{ color: "#cf1322" }}>
-                  {displayStats.todayExits} unidades
+                  {dashboardStats?.todayExits || 0} unidades
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: "#cf1322", mt: 1 }}>
-                R$ {displayStats.todayExitsValue.toFixed(2)}
+                R$ {(dashboardStats?.todayExitsValue || 0).toFixed(2)}
               </Typography>
             </CardContent>
           </Card>
@@ -280,7 +275,7 @@ export default function Dashboard() {
                 Saldo
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {displayStats.todayBalance >= 0 ? (
+                {(dashboardStats?.todayBalance || 0) >= 0 ? (
                   <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
                 ) : (
                   <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
@@ -289,10 +284,12 @@ export default function Dashboard() {
                   variant="h5"
                   sx={{
                     color:
-                      displayStats.todayBalance >= 0 ? "#3f8600" : "#cf1322",
+                      (dashboardStats?.todayBalance || 0) >= 0
+                        ? "#3f8600"
+                        : "#cf1322",
                   }}
                 >
-                  {displayStats.todayBalance} unidades
+                  {dashboardStats?.todayBalance || 0} unidades
                 </Typography>
               </Box>
               <Typography
@@ -300,8 +297,8 @@ export default function Dashboard() {
                 sx={{
                   mt: 1,
                   color:
-                    displayStats.todayEntriesValue -
-                      displayStats.todayExitsValue >=
+                    (dashboardStats?.todayEntriesValue || 0) -
+                      (dashboardStats?.todayExitsValue || 0) >=
                     0
                       ? "#3f8600"
                       : "#cf1322",
@@ -309,7 +306,8 @@ export default function Dashboard() {
               >
                 R${" "}
                 {(
-                  displayStats.todayEntriesValue - displayStats.todayExitsValue
+                  (dashboardStats?.todayEntriesValue || 0) -
+                  (dashboardStats?.todayExitsValue || 0)
                 ).toFixed(2)}
               </Typography>
             </CardContent>
@@ -328,7 +326,7 @@ export default function Dashboard() {
             <Card elevation={2} sx={{ p: 2 }}>
               <Box sx={{ height: 300 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={displayTrendData}>
+                  <LineChart data={trendData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
                     <YAxis />
@@ -420,9 +418,9 @@ export default function Dashboard() {
                 </TableCell>
               </TableRow>
             ) : (
-              recentMovements.map((movement) => (
+              recentMovements.map((movement: any) => (
                 <TableRow key={movement.id}>
-                  <TableCell>{movement.product.name}</TableCell>
+                  <TableCell>{movement.product?.name || "N/A"}</TableCell>
                   <TableCell>
                     <Chip
                       label={movement.type === "entry" ? "Entrada" : "Saída"}

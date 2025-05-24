@@ -1,0 +1,30 @@
+{
+  "name": "estoque-gestor-monorepo",
+  "version": "1.0.0",
+  "description": "Sistema de Gestão de Estoque - Monorepo",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install": "yarn install --frozen-lockfile",
+    "start": "concurrently \"yarn start:backend\" \"yarn start:frontend\"",
+    "start:backend": "cd backend && yarn start:dev",
+    "start:frontend": "cd frontend && yarn dev",
+    "build": "yarn build:backend && yarn build:frontend",
+    "build:backend": "cd backend && yarn build",
+    "build:frontend": "cd frontend && yarn build",
+    "dev": "concurrently \"yarn start:backend\" \"yarn start:frontend\"",
+    "lint": "yarn lint:backend && yarn lint:frontend",
+    "lint:backend": "cd backend && yarn lint",
+    "lint:frontend": "cd frontend && yarn lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  }
+}
