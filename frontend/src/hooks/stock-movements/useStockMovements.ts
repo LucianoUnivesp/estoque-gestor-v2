@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/services/api";
+import * as api from "@/services/api";
 import { StockMovement } from "@/interfaces";
 import { validateStockMovement } from "@/utils/validation";
 
@@ -25,8 +25,8 @@ export const useStockMovements = (startDate?: string, endDate?: string) => {
             if (startDate && endDate) {
                 url += `?startDate=${startDate}&endDate=${endDate}`;
             }
-            const response = await api.get(url);
-            return response.data;
+
+            return await api.getStockMovements(url);;
         },
         staleTime: 5 * 60 * 1000,
     });
@@ -42,8 +42,7 @@ export const useCreateStockMovement = () => {
                 throw new Error(validationErrors[0].message);
             }
 
-            const response = await api.post("/stock-movements", stockMovement);
-            return response.data;
+            return await api.createStockMovement(stockMovement);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [STOCK_MOVEMENTS_KEY] });
@@ -61,8 +60,7 @@ export const useUpdateStockMovement = () => {
                 throw new Error(validationErrors[0].message);
             }
 
-            const response = await api.patch(`/stock-movements/${id}`, data);
-            return response.data;
+            return await api.updateStockMovement(id, data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [STOCK_MOVEMENTS_KEY] });
@@ -75,7 +73,7 @@ export const useDeleteStockMovement = () => {
 
     return useMutation({
         mutationFn: async (id: number) => {
-            await api.delete(`/stock-movements/${id}`);
+            await api.deleteStockMovement(id);
             return id;
         },
         onSuccess: () => {

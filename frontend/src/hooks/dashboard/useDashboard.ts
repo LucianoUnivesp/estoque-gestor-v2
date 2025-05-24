@@ -2,7 +2,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import api from "@/services/api";
+import * as api from "@/services/api";
 import { DashboardStats } from "@/interfaces";
 
 // Cache keys
@@ -14,8 +14,7 @@ export const useDashboardStats = () => {
     return useQuery({
         queryKey: [DASHBOARD_STATS_KEY],
         queryFn: async (): Promise<DashboardStats> => {
-            const response = await api.get("/dashboard/stats");
-            return response.data;
+            return await api.getDashboardStats();
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
