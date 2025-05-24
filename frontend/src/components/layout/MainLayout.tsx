@@ -1,4 +1,3 @@
-// src/components/layout/MainLayout.tsx (Fixed for SSR)
 "use client";
 
 import React, { ReactNode, useState, useEffect } from "react";
@@ -9,8 +8,6 @@ import {
   Typography,
   Container,
   Paper,
-  Tabs,
-  Tab,
   useTheme,
   useMediaQuery,
   Drawer,
@@ -18,15 +15,15 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  IconButton,
-  Divider,
+  Avatar,
+  Stack,
+  Chip,
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
   Inventory as InventoryIcon,
   Category as CategoryIcon,
   SwapHoriz as SwapHorizIcon,
-  Menu as MenuIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -37,12 +34,11 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"), { noSsr: true });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  // Prevent hydration mismatch by only rendering after mount
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -51,23 +47,33 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  // Navigation items used in both desktop and mobile views
   const navItems = [
-    { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
-    { label: "Produtos", icon: <InventoryIcon />, path: "/products" },
+    {
+      label: "Dashboard",
+      icon: <DashboardIcon />,
+      path: "/",
+      description: "Visão geral do sistema",
+    },
+    {
+      label: "Produtos",
+      icon: <InventoryIcon />,
+      path: "/products",
+      description: "Gerenciar produtos",
+    },
     {
       label: "Tipos de Produto",
       icon: <CategoryIcon />,
       path: "/product-types",
+      description: "Categorias de produtos",
     },
     {
       label: "Movimentações",
       icon: <SwapHorizIcon />,
       path: "/stock-movements",
+      description: "Entrada e saída de estoque",
     },
   ];
 
-  // Get current active tab value based on pathname
   const getActiveTab = () => {
     const foundIndex = navItems.findIndex((item) => {
       if (item.path === "/") {
@@ -78,50 +84,111 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     return foundIndex !== -1 ? foundIndex : 0;
   };
 
-  // Drawer content for mobile
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        Estoque Gestor
-      </Typography>
-      <Divider />
-      <List>
+    <Box sx={{ width: 280, height: "100%", bgcolor: "background.paper" }}>
+      <Box sx={{ p: 3, borderBottom: 1, borderColor: "divider" }}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Avatar
+            sx={{
+              bgcolor: "primary.main",
+              width: 40,
+              height: 40,
+              background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            }}
+          >
+            📦
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight="bold" color="text.primary">
+              Estoque Gestor
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Sistema de Gestão
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
+
+      <List sx={{ px: 2, py: 1 }}>
         {navItems.map((item, index) => (
           <Link
             href={item.path}
             key={index}
             style={{ textDecoration: "none", color: "inherit" }}
+            onClick={() => isMobile && setMobileOpen(false)}
           >
-            <ListItem button selected={getActiveTab() === index}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
+            <ListItem
+              button
+              selected={getActiveTab() === index}
+              sx={{
+                borderRadius: 2,
+                mb: 0.5,
+                "&.Mui-selected": {
+                  bgcolor: "primary.50",
+                  borderLeft: 3,
+                  borderLeftColor: "primary.main",
+                  "& .MuiListItemIcon-root": {
+                    color: "primary.main",
+                  },
+                  "& .MuiListItemText-primary": {
+                    color: "primary.main",
+                    fontWeight: 600,
+                  },
+                },
+                "&:hover": {
+                  bgcolor: "grey.50",
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                secondary={item.description}
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                }}
+                secondaryTypographyProps={{
+                  fontSize: "0.75rem",
+                }}
+              />
             </ListItem>
           </Link>
         ))}
       </List>
+
+      <Box sx={{ mt: "auto", p: 2, borderTop: 1, borderColor: "divider" }}>
+        <Chip
+          label="v1.0.0"
+          size="small"
+          variant="outlined"
+          sx={{ fontSize: "0.75rem" }}
+        />
+      </Box>
     </Box>
   );
 
-  // Don't render responsive content until mounted to prevent hydration mismatch
   if (!mounted) {
     return (
       <Box
         sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}
       >
-        <AppBar position="static">
-          <Toolbar>
+        <AppBar position="static" elevation={0}>
+          <Toolbar sx={{ minHeight: 72 }}>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Estoque Gestor
             </Typography>
           </Toolbar>
         </AppBar>
-        <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
+        <Container component="main" sx={{ flexGrow: 1, py: 4 }}>
           <Paper
-            elevation={3}
+            elevation={0}
             sx={{
-              p: 3,
-              borderRadius: 2,
-              minHeight: "calc(100vh - 190px)",
+              p: 4,
+              borderRadius: 3,
+              minHeight: "calc(100vh - 200px)",
+              border: 1,
+              borderColor: "grey.200",
             }}
           >
             {children}
@@ -132,100 +199,96 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar position="static">
-        <Toolbar>
-          {isMobile && (
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ flexGrow: isMobile ? 1 : 0, mr: 4 }}
-          >
-            Estoque Gestor
-          </Typography>
-          {!isMobile && (
-            <Tabs
-              value={getActiveTab()}
-              textColor="inherit"
-              indicatorColor="secondary"
-              sx={{ flexGrow: 1 }}
-            >
-              {navItems.map((item, index) => (
-                <Tab
-                  key={index}
-                  component={Link}
-                  href={item.path}
-                  icon={item.icon}
-                  iconPosition="start"
-                  label={item.label}
-                />
-              ))}
-            </Tabs>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      {/* Mobile drawer */}
-      {isMobile && (
-        <Box component="nav">
-          <Drawer
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true, // Better open performance on mobile
-            }}
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.50" }}>
+      {/* Desktop Sidebar */}
+      {!isMobile && (
+        <Box
+          component="nav"
+          sx={{
+            width: 280,
+            flexShrink: 0,
+          }}
+        >
+          <Paper
+            elevation={0}
             sx={{
-              display: { xs: "block", sm: "none" },
-              "& .MuiDrawer-paper": { boxSizing: "border-box", width: 240 },
+              width: 280,
+              height: "100vh",
+              position: "fixed",
+              borderRight: 1,
+              borderColor: "divider",
+              borderRadius: 0,
             }}
           >
             {drawer}
-          </Drawer>
+          </Paper>
         </Box>
       )}
 
-      {/* Main content */}
-      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
-        <Paper
-          elevation={3}
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true,
+          }}
           sx={{
-            p: { xs: 2, sm: 3 },
-            borderRadius: 2,
-            minHeight: {
-              xs: "calc(100vh - 170px)",
-              sm: "calc(100vh - 190px)",
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: 280,
+              border: "none",
             },
           }}
         >
-          {children}
-        </Paper>
-      </Container>
+          {drawer}
+        </Drawer>
+      )}
 
-      {/* Footer */}
+      {/* Main Content */}
       <Box
-        component="footer"
+        component="main"
         sx={{
-          py: 2,
-          textAlign: "center",
-          bgcolor: theme.palette.grey[100],
-          mt: "auto",
+          flexGrow: 1,
+          width: { md: `calc(100% - 280px)` },
         }}
       >
-        <Typography variant="body2" color="text.secondary">
-          Estoque Gestor ©{new Date().getFullYear()} - Sistema de Gestão de
-          Estoque
-        </Typography>
+        {/* Top Bar */}
+        <AppBar
+          position="sticky"
+          elevation={0}
+          sx={{
+            bgcolor: "background.paper",
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+        </AppBar>
+
+        {/* Page Content */}
+        <Container
+          maxWidth={false}
+          sx={{
+            py: { xs: 2, sm: 3, md: 4 },
+            px: { xs: 2, sm: 3, md: 4 },
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, sm: 3, md: 4 },
+              borderRadius: 3,
+              minHeight: "calc(100vh - 160px)",
+              border: 1,
+              borderColor: "grey.200",
+              bgcolor: "background.paper",
+            }}
+          >
+            {children}
+          </Paper>
+        </Container>
       </Box>
     </Box>
   );

@@ -15,6 +15,7 @@ Sistema completo de gestão de estoque desenvolvido com Next.js (frontend) e Nes
 ## 🛠️ Tecnologias
 
 ### Frontend
+
 - **Next.js 15** - Framework React
 - **Material-UI** - Biblioteca de componentes
 - **React Query** - Gerenciamento de estado servidor
@@ -22,6 +23,7 @@ Sistema completo de gestão de estoque desenvolvido com Next.js (frontend) e Nes
 - **TypeScript** - Tipagem estática
 
 ### Backend
+
 - **NestJS** - Framework Node.js
 - **Supabase** - Banco de dados PostgreSQL
 - **TypeScript** - Tipagem estática
@@ -36,12 +38,14 @@ Sistema completo de gestão de estoque desenvolvido com Next.js (frontend) e Nes
 ## 🔧 Configuração
 
 ### 1. Clone o repositório
+
 ```bash
 git clone <repository-url>
 cd estoque-gestor
 ```
 
 ### 2. Instale as dependências
+
 ```bash
 yarn install
 ```
@@ -49,11 +53,13 @@ yarn install
 ### 3. Configure o Supabase
 
 #### 3.1. Crie um projeto no Supabase
+
 1. Acesse [supabase.com](https://supabase.com)
 2. Crie um novo projeto
 3. Anote a URL e a chave anônima do projeto
 
 #### 3.2. Execute o SQL para criar as tabelas
+
 ```sql
 -- Criar tabela de tipos de produto
 CREATE TABLE product_types (
@@ -103,22 +109,25 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_product_types_updated_at 
-    BEFORE UPDATE ON product_types 
+CREATE TRIGGER update_product_types_updated_at
+    BEFORE UPDATE ON product_types
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_products_updated_at 
-    BEFORE UPDATE ON products 
+CREATE TRIGGER update_products_updated_at
+    BEFORE UPDATE ON products
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 ```
 
 ### 4. Configure as variáveis de ambiente
 
 #### Backend (.env)
+
 ```bash
 cp backend/.env.example backend/.env
 ```
+
 Edite o arquivo `backend/.env` e configure:
+
 ```
 SUPABASE_URL=sua_url_do_supabase
 SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
@@ -127,10 +136,13 @@ NODE_ENV=development
 ```
 
 #### Frontend (.env.local)
+
 ```bash
 cp frontend/.env.example frontend/.env.local
 ```
+
 Edite o arquivo `frontend/.env.local`:
+
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 NODE_ENV=development
@@ -139,6 +151,7 @@ NODE_ENV=development
 ## 🚀 Executando o projeto
 
 ### Desenvolvimento (Frontend + Backend)
+
 ```bash
 yarn start
 # ou
@@ -146,16 +159,19 @@ yarn dev
 ```
 
 ### Executar apenas o backend
+
 ```bash
 yarn start:backend
 ```
 
 ### Executar apenas o frontend
+
 ```bash
 yarn start:frontend
 ```
 
 ### Build para produção
+
 ```bash
 yarn build
 ```
@@ -198,15 +214,18 @@ estoque-gestor/
 ## 🐛 Solução de Problemas
 
 ### Erro de conexão com Supabase
+
 - Verifique se as variáveis de ambiente estão corretas
 - Confirme se o projeto Supabase está ativo
 - Verifique se as tabelas foram criadas corretamente
 
 ### Erro de CORS
+
 - Certifique-se de que o backend está rodando na porta 3001
 - Verifique a configuração de CORS no arquivo `main.ts`
 
 ### Erro de compilação TypeScript
+
 - Execute `yarn install` para garantir que todas as dependências estão instaladas
 - Verifique se a versão do Node.js é 18+
 

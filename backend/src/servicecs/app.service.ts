@@ -8,25 +8,88 @@ import { ProductDto } from '../dtos/product.dto';
 import { ProductTypeDto } from '../dtos/productType.dto';
 import { StockMovementDto } from 'src/dtos/stockMovement.dto';
 
+interface PaginationQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  productTypeId?: number;
+}
+
+interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
 @Injectable()
 export class AppService {
-  constructor(private readonly supabaseService: SupabaseService) {}
+  constructor(private readonly supabaseService: SupabaseService) { }
 
   // Product Types Methods
-  async getProductTypes(): Promise<ProductTypeDto[]> {
+  async getProductTypes(query?: PaginationQuery): Promise<any> {
     try {
-      const { data, error } = await this.supabaseService.client
+      // Check if pagination is needed
+      const needsPagination = query && typeof query.page === 'number' && typeof query.limit === 'number';
+
+      let supabaseQuery = this.supabaseService.client
         .from('product_types')
-        .select('*')
-        .order('name');
+        .select('*', { count: needsPagination ? 'exact' : undefined });
 
-      if (error) throw error;
+      // Add search filter
+      if (query?.search) {
+        supabaseQuery = supabaseQuery.ilike('name', `%${query.search}%`);
+      }
 
-      return data.map((item) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-      }));
+      if (needsPagination) {
+        const page = Math.max(1, query.page!);
+        const limit = Math.min(100, Math.max(1, query.limit!));
+        const offset = (page - 1) * limit;
+
+        supabaseQuery = supabaseQuery
+          .range(offset, offset + limit - 1)
+          .order('name');
+
+        const { data, error, count } = await supabaseQuery;
+
+        if (error) throw error;
+
+        const total = count || 0;
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+          data: data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+          })),
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1,
+          },
+        };
+      } else {
+        // Return all items without pagination
+        supabaseQuery = supabaseQuery.order('name');
+        const { data, error } = await supabaseQuery;
+
+        if (error) throw error;
+
+        return data.map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+        }));
+      }
     } catch (error) {
       throw new BadRequestException(
         `Erro ao buscar tipos de produto: ${error.message}`,
@@ -128,9 +191,12 @@ export class AppService {
   }
 
   // Products Methods
-  async getProducts(): Promise<ProductDto[]> {
+  async getProducts(query?: PaginationQuery): Promise<any> {
     try {
-      const { data, error } = await this.supabaseService.client
+      // Check if pagination is needed
+      const needsPagination = query && typeof query.page === 'number' && typeof query.limit === 'number';
+
+      let supabaseQuery = this.supabaseService.client
         .from('products')
         .select(
           `
@@ -141,28 +207,87 @@ export class AppService {
             description
           )
         `,
-        )
-        .order('name');
+          { count: needsPagination ? 'exact' : undefined }
+        );
 
-      if (error) throw error;
+      // Add search filter
+      if (query?.search) {
+        supabaseQuery = supabaseQuery.ilike('name', `%${query.search}%`);
+      }
 
-      return data.map((item) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        price: parseFloat(item.price),
-        quantity: item.quantity,
-        expirationDate: item.expiration_date,
-        supplier: item.supplier,
-        productTypeId: item.product_type_id,
-        productType: item.product_types
-          ? {
+      // Add product type filter
+      if (query?.productTypeId) {
+        supabaseQuery = supabaseQuery.eq('product_type_id', query.productTypeId);
+      }
+
+      if (needsPagination) {
+        const page = Math.max(1, query.page!);
+        const limit = Math.min(100, Math.max(1, query.limit!));
+        const offset = (page - 1) * limit;
+
+        supabaseQuery = supabaseQuery
+          .range(offset, offset + limit - 1)
+          .order('name');
+
+        const { data, error, count } = await supabaseQuery;
+
+        if (error) throw error;
+
+        const total = count || 0;
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+          data: data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            expirationDate: item.expiration_date,
+            supplier: item.supplier,
+            productTypeId: item.product_type_id,
+            productType: item.product_types
+              ? {
+                id: item.product_types.id,
+                name: item.product_types.name,
+                description: item.product_types.description,
+              }
+              : undefined,
+          })),
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages,
+            hasNext: page < totalPages,
+            hasPrev: page > 1,
+          },
+        };
+      } else {
+        // Return all items without pagination
+        supabaseQuery = supabaseQuery.order('name');
+        const { data, error } = await supabaseQuery;
+
+        if (error) throw error;
+
+        return data.map((item) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          expirationDate: item.expiration_date,
+          supplier: item.supplier,
+          productTypeId: item.product_type_id,
+          productType: item.product_types
+            ? {
               id: item.product_types.id,
               name: item.product_types.name,
               description: item.product_types.description,
             }
-          : undefined,
-      }));
+            : undefined,
+        }));
+      }
     } catch (error) {
       throw new BadRequestException(
         `Erro ao buscar produtos: ${error.message}`,
@@ -210,10 +335,10 @@ export class AppService {
         productTypeId: data.product_type_id,
         productType: data.product_types
           ? {
-              id: data.product_types.id,
-              name: data.product_types.name,
-              description: data.product_types.description,
-            }
+            id: data.product_types.id,
+            name: data.product_types.name,
+            description: data.product_types.description,
+          }
           : undefined,
       };
     } catch (error) {
@@ -278,10 +403,10 @@ export class AppService {
         productTypeId: updatedData.product_type_id,
         productType: updatedData.product_types
           ? {
-              id: updatedData.product_types.id,
-              name: updatedData.product_types.name,
-              description: updatedData.product_types.description,
-            }
+            id: updatedData.product_types.id,
+            name: updatedData.product_types.name,
+            description: updatedData.product_types.description,
+          }
           : undefined,
       };
     } catch (error) {
@@ -318,6 +443,7 @@ export class AppService {
     }
   }
 
+  // Stock Movements (mantido igual pois não tem problemas)
   async getStockMovements(startDate?: string, endDate?: string) {
     try {
       let query = this.supabaseService.client
@@ -349,7 +475,7 @@ export class AppService {
 
       if (error) throw error;
 
-      const movements: any[] = data.map((item) => ({
+      const movements = data.map((item) => ({
         id: item.id,
         type: item.type,
         quantity: item.quantity,
@@ -358,16 +484,16 @@ export class AppService {
         createdAt: item.created_at,
         product: item.products
           ? {
-              id: item.products.id,
-              name: item.products.name,
-              price: parseFloat(item.products.price),
-              productType: item.products.product_types
-                ? {
-                    id: item.products.product_types.id,
-                    name: item.products.product_types.name,
-                  }
-                : undefined,
-            }
+            id: item.products.id,
+            name: item.products.name,
+            price: parseFloat(item.products.price),
+            productType: item.products.product_types
+              ? {
+                id: item.products.product_types.id,
+                name: item.products.product_types.name,
+              }
+              : undefined,
+          }
           : undefined,
       }));
 
@@ -409,9 +535,6 @@ export class AppService {
     const supabase = this.supabaseService.client;
 
     try {
-      // Start a transaction-like operation
-      await supabase.rpc('begin');
-
       // Validate product exists
       const { data: product, error: productError } = await supabase
         .from('products')
@@ -482,16 +605,16 @@ export class AppService {
         createdAt: movementData.created_at,
         product: movementData.products
           ? {
-              id: movementData.products.id,
-              name: movementData.products.name,
-              price: parseFloat(movementData.products.price),
-              productType: movementData.products.product_types
-                ? {
-                    id: movementData.products.product_types.id,
-                    name: movementData.products.product_types.name,
-                  }
-                : undefined,
-            }
+            id: movementData.products.id,
+            name: movementData.products.name,
+            price: parseFloat(movementData.products.price),
+            productType: movementData.products.product_types
+              ? {
+                id: movementData.products.product_types.id,
+                name: movementData.products.product_types.name,
+              }
+              : undefined,
+          }
           : undefined,
       };
     } catch (error) {
@@ -597,16 +720,16 @@ export class AppService {
         createdAt: updatedData.created_at,
         product: updatedData.products
           ? {
-              id: updatedData.products.id,
-              name: updatedData.products.name,
-              price: parseFloat(updatedData.products.price),
-              productType: updatedData.products.product_types
-                ? {
-                    id: updatedData.products.product_types.id,
-                    name: updatedData.products.product_types.name,
-                  }
-                : undefined,
-            }
+            id: updatedData.products.id,
+            name: updatedData.products.name,
+            price: parseFloat(updatedData.products.price),
+            productType: updatedData.products.product_types
+              ? {
+                id: updatedData.products.product_types.id,
+                name: updatedData.products.product_types.name,
+              }
+              : undefined,
+          }
           : undefined,
       };
     } catch (error) {
@@ -685,6 +808,7 @@ export class AppService {
     }
   }
 
+  // Dashboard Methods
   async getDashboardStats() {
     try {
       // Get total products

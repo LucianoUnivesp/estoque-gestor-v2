@@ -1,4 +1,4 @@
-// src/app/products/page.tsx
+// src/app/products/page.tsx - Modern Design with Search & Pagination
 "use client";
 
 import { useState } from "react";
@@ -23,12 +23,19 @@ import {
   DialogActions,
   Snackbar,
   Chip,
+  Stack,
+  Card,
+  CardContent,
+  Tooltip,
+  Avatar,
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Warning as WarningIcon,
+  TrendingUp as TrendingUpIcon,
+  Inventory as InventoryIcon,
 } from "@mui/icons-material";
 import {
   useProducts,
@@ -36,11 +43,18 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "@/hooks/products/useProducts";
-import { useProductTypes } from "@/hooks/product-types/useProductTypes";
+import { useAllProductTypes } from "@/hooks/product-types/useProductTypes";
 import ProductForm from "@/components/products/ProductForm";
+import SearchBar from "@/components/common/SearchBar";
+import Pagination from "@/components/common/Pagination";
 import { Product } from "@/interfaces";
 
 export default function ProductsPage() {
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [productTypeFilter, setProductTypeFilter] = useState<number | string>("");
+  
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -56,11 +70,26 @@ export default function ProductsPage() {
   });
 
   // React Query hooks
-  const { data: products = [], isLoading, error } = useProducts();
-  const { data: productTypes = [] } = useProductTypes();
+  const {
+    data: productsResult,
+    isLoading,
+    error,
+  } = useProducts({
+    page,
+    limit,
+    search,
+    productTypeId: productTypeFilter ? Number(productTypeFilter) : undefined,
+  });
+
+  const { data: allProductTypes = [] } = useAllProductTypes();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
+
+  // Handle pagination vs non-pagination response
+  const isProductsPaginated = productsResult && !Array.isArray(productsResult);
+  const products = isProductsPaginated ? productsResult.data : (productsResult as Product[] || []);
+  const pagination = isProductsPaginated ? productsResult.pagination : null;
 
   const handleOpenForm = (product?: Product) => {
     setEditingProduct(product || null);
@@ -93,11 +122,10 @@ export default function ProductsPage() {
         });
       }
       handleCloseForm();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (error: any) {
       setSnackbar({
         open: true,
-        message: "Erro ao salvar produto. Tente novamente.",
+        message: error.message || "Erro ao salvar produto. Tente novamente.",
         severity: "error",
       });
     }
@@ -124,11 +152,10 @@ export default function ProductsPage() {
         severity: "success",
       });
       handleCloseDeleteDialog();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (error: any) {
       setSnackbar({
         open: true,
-        message: "Erro ao excluir produto. Tente novamente.",
+        message: error.message || "Erro ao excluir produto. Tente novamente.",
         severity: "error",
       });
     }
@@ -136,6 +163,15 @@ export default function ProductsPage() {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to first page when changing limit
   };
 
   const isLowStock = (quantity: number) => quantity <= 5;
@@ -153,26 +189,41 @@ export default function ProductsPage() {
           label={`Vencido há ${Math.abs(diffDays)} dias`}
           color="error"
           size="small"
+          sx={{ fontWeight: 500 }}
         />
       );
     } else if (diffDays <= 30) {
-      return <Chip label={`${diffDays} dias`} color="warning" size="small" />;
+      return (
+        <Chip
+          label={`${diffDays} dias`}
+          color="warning"
+          size="small"
+          sx={{ fontWeight: 500 }}
+        />
+      );
     }
 
     return date.toLocaleDateString("pt-BR");
   };
 
+  const getStockStatus = (quantity: number) => {
+    if (quantity === 0) return { color: "error", label: "Sem estoque" };
+    if (quantity <= 5) return { color: "warning", label: "Estoque baixo" };
+    if (quantity <= 20) return { color: "info", label: "Estoque normal" };
+    return { color: "success", label: "Estoque alto" };
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
-        <CircularProgress />
+        <CircularProgress size={40} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error">
+      <Alert severity="error" sx={{ borderRadius: 2 }}>
         Não foi possível carregar a lista de produtos. Tente novamente.
       </Alert>
     );
@@ -180,99 +231,251 @@ export default function ProductsPage() {
 
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">Produtos</Typography>
+      {/* Header */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+            Produtos
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Gerencie seu catálogo de produtos
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
+          size="large"
+          sx={{
+            borderRadius: 2,
+            px: 3,
+            py: 1.5,
+            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+            boxShadow: '0 4px 14px 0 rgb(99 102 241 / 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+              boxShadow: '0 6px 20px 0 rgb(99 102 241 / 0.4)',
+            },
+          }}
         >
           Novo Produto
         </Button>
-      </Box>
+      </Stack>
 
-      <TableContainer component={Paper}>
+      {/* Summary Cards */}
+      <Stack direction="row" spacing={3} sx={{ mb: 4 }}>
+        <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+                <InventoryIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h4" fontWeight="bold" color="text.primary">
+                  {products.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Total de Produtos
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
+                <WarningIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h4" fontWeight="bold" color="text.primary">
+                  {products.filter(p => isLowStock(p.quantity)).length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Estoque Baixo
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ flex: 1, borderRadius: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
+                <TrendingUpIcon />
+              </Avatar>
+              <Box>
+                <Typography variant="h4" fontWeight="bold" color="text.primary">
+                  R$ {products.reduce((sum, p) => sum + (p.price * p.quantity), 0).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Valor Total do Estoque
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+
+      {/* Search and Filters */}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: 1, borderColor: 'grey.200' }}>
+        <SearchBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          placeholder="Buscar produtos por nome..."
+          filterValue={productTypeFilter}
+          onFilterChange={setProductTypeFilter}
+          filterOptions={allProductTypes.map(type => ({
+            value: type.id,
+            label: type.name
+          }))}
+          filterLabel="Tipo"
+        />
+      </Paper>
+
+      {/* Products Table */}
+      <TableContainer 
+        component={Paper} 
+        sx={{ 
+          borderRadius: 3, 
+          border: 1, 
+          borderColor: 'grey.200',
+          overflow: 'hidden'
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Nome</TableCell>
-              <TableCell>Tipo</TableCell>
-              <TableCell align="right">Quantidade</TableCell>
-              <TableCell align="right">Preço</TableCell>
-              <TableCell>Fornecedor</TableCell>
-              <TableCell>Validade</TableCell>
-              <TableCell width="120">Ações</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Produto</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Tipo</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Estoque</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Preço</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Fornecedor</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Validade</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  <Typography color="textSecondary">
-                    Nenhum produto cadastrado
-                  </Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <Stack alignItems="center" spacing={2}>
+                    <InventoryIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                    <Typography variant="h6" color="text.secondary">
+                      Nenhum produto encontrado
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {search || productTypeFilter 
+                        ? "Tente ajustar os filtros de busca" 
+                        : "Comece criando seu primeiro produto"
+                      }
+                    </Typography>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ) : (
-              products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      {product.name}
-                      {isLowStock(product.quantity) && (
-                        <WarningIcon color="warning" fontSize="small" />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {product.productType?.name || "Sem tipo"}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Chip
-                      label={product.quantity}
-                      color={
-                        isLowStock(product.quantity) ? "warning" : "default"
-                      }
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    R$ {product.price.toFixed(2)}
-                  </TableCell>
-                  <TableCell>{product.supplier || "-"}</TableCell>
-                  <TableCell>
-                    {formatExpirationDate(product.expirationDate)}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      color="primary"
-                      size="small"
-                      onClick={() => handleOpenForm(product)}
-                      title="Editar"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      color="error"
-                      size="small"
-                      onClick={() => handleOpenDeleteDialog(product)}
-                      title="Excluir"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))
+              products.map((product) => {
+                const stockStatus = getStockStatus(product.quantity);
+                return (
+                  <TableRow key={product.id} hover>
+                    <TableCell>
+                      <Stack spacing={1}>
+                        <Typography variant="body1" fontWeight={500}>
+                          {product.name}
+                        </Typography>
+                        {product.description && (
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {product.description}
+                          </Typography>
+                        )}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={product.productType?.name || "Sem tipo"}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontWeight: 500 }}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Stack alignItems="center" spacing={1}>
+                        <Typography variant="body1" fontWeight={600}>
+                          {product.quantity}
+                        </Typography>
+                        <Chip
+                          label={stockStatus.label}
+                          color={stockStatus.color as any}
+                          size="small"
+                          sx={{ fontSize: '0.75rem', height: 20 }}
+                        />
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body1" fontWeight={500}>
+                        R$ {product.price.toFixed(2)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {product.supplier || "-"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {formatExpirationDate(product.expirationDate)}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Stack direction="row" spacing={1} justifyContent="center">
+                        <Tooltip title="Editar produto">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenForm(product)}
+                            sx={{
+                              color: 'primary.main',
+                              '&:hover': { bgcolor: 'primary.50' }
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Excluir produto">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDeleteDialog(product)}
+                            sx={{
+                              color: 'error.main',
+                              '&:hover': { bgcolor: 'error.50' }
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* Pagination */}
+      {pagination && (
+        <Pagination
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onLimitChange={handleLimitChange}
+        />
+      )}
+
       {/* Form Dialog */}
       <ProductForm
         open={formOpen}
         initialValues={editingProduct || undefined}
-        productTypes={productTypes}
+        productTypes={allProductTypes}
         onSubmit={handleSubmit}
         onClose={handleCloseForm}
         loading={createMutation.isPending || updateMutation.isPending}
@@ -284,22 +487,39 @@ export default function ProductsPage() {
         onClose={handleCloseDeleteDialog}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3 }
+        }}
       >
-        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogTitle sx={{ pb: 2 }}>
+          <Typography variant="h5" fontWeight="bold">
+            Confirmar Exclusão
+          </Typography>
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Tem certeza de que deseja excluir o produto {deletingProduct?.name}?
+          <DialogContentText sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
+            Tem certeza de que deseja excluir o produto{" "}
+            <strong>{deletingProduct?.name}</strong>?
+            <br />
+            <br />
             Esta ação não pode ser desfeita e pode afetar as movimentações de
             estoque relacionadas.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Cancelar</Button>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={handleCloseDeleteDialog}
+            variant="outlined"
+            sx={{ borderRadius: 2 }}
+          >
+            Cancelar
+          </Button>
           <Button
             onClick={handleDelete}
             color="error"
             variant="contained"
             disabled={deleteMutation.isPending}
+            sx={{ borderRadius: 2 }}
           >
             {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
           </Button>
@@ -316,7 +536,11 @@ export default function ProductsPage() {
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          sx={{ 
+            width: "100%",
+            borderRadius: 2,
+            boxShadow: 3
+          }}
         >
           {snackbar.message}
         </Alert>

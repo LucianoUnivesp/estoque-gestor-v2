@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
 import { Product, ProductType, StockMovement, DashboardStats } from '@/interfaces';
 
@@ -9,9 +10,40 @@ const api = axios.create({
     timeout: 60000, // 60 second timeout
 });
 
+// Pagination and search interfaces
+interface PaginationParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+}
+
+interface ProductSearchParams extends PaginationParams {
+    productTypeId?: number;
+}
+
+interface PaginatedResponse<T> {
+    data: T[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    };
+}
+
 // Products
-export async function getProducts(): Promise<Product[]> {
-    const response = await api.get('/products');
+export async function getProducts(params?: ProductSearchParams): Promise<Product[] | PaginatedResponse<Product>> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.productTypeId) searchParams.append('productTypeId', params.productTypeId.toString());
+
+    const url = `/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const response = await api.get(url);
     return response.data;
 }
 
@@ -30,8 +62,15 @@ export async function deleteProduct(id: number): Promise<void> {
 }
 
 // Product Types
-export async function getProductTypes(): Promise<ProductType[]> {
-    const response = await api.get('/product-types');
+export async function getProductTypes(params?: PaginationParams): Promise<ProductType[] | PaginatedResponse<ProductType>> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.page) searchParams.append('page', params.page.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    if (params?.search) searchParams.append('search', params.search);
+
+    const url = `/product-types${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const response = await api.get(url);
     return response.data;
 }
 
@@ -98,12 +137,12 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return response.data;
 }
 
-export async function getStockTrend(): Promise<unknown[]> {
+export async function getStockTrend(): Promise<any[]> {
     const response = await api.get('/dashboard/stock-trend');
     return response.data;
 }
 
-export async function getRecentMovements(): Promise<unknown[]> {
+export async function getRecentMovements(): Promise<any[]> {
     const response = await api.get('/dashboard/recent-movements');
     return response.data;
 }

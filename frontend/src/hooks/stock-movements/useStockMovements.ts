@@ -1,4 +1,4 @@
-// src/hooks/stock-movements/useStockMovements.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +47,7 @@ export const useCreateStockMovement = () => {
             queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
             queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
         },
-        onError: (error: unknown) => {
+        onError: (error: any) => {
             console.error('Error creating stock movement:', error);
         },
     });
@@ -71,7 +71,7 @@ export const useUpdateStockMovement = () => {
             queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
             queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
         },
-        onError: (error: unknown) => {
+        onError: (error: any) => {
             console.error('Error updating stock movement:', error);
         },
     });
@@ -91,7 +91,7 @@ export const useDeleteStockMovement = () => {
             queryClient.invalidateQueries({ queryKey: [PRODUCTS_KEY] });
             queryClient.invalidateQueries({ queryKey: [DASHBOARD_STATS_KEY] });
         },
-        onError: (error: unknown) => {
+        onError: (error: any) => {
             console.error('Error deleting stock movement:', error);
         },
     });

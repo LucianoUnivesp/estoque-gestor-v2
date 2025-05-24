@@ -7,18 +7,34 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ProductDto } from '../dtos/product.dto';
 import { AppService } from 'src/servicecs/app.service';
 
+interface ProductQueryParams {
+  page?: string;
+  limit?: string;
+  search?: string;
+  productTypeId?: string;
+}
+
 @Controller('api/products')
 export class ProductsController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
-  async getProducts(): Promise<ProductDto[]> {
-    console.log('Get Products');
-    return await this.appService.getProducts();
+  async getProducts(@Query() query: ProductQueryParams) {
+    console.log('Get Products with query:', query);
+
+    const queryParams = {
+      page: query.page ? parseInt(query.page) : undefined,
+      limit: query.limit ? parseInt(query.limit) : undefined,
+      search: query.search || undefined,
+      productTypeId: query.productTypeId ? parseInt(query.productTypeId) : undefined,
+    };
+
+    return await this.appService.getProducts(queryParams);
   }
 
   @Patch(':id')
@@ -26,7 +42,7 @@ export class ProductsController {
     @Param('id') id: number,
     @Body() product: Partial<ProductDto>,
   ): Promise<ProductDto> {
-    console.log('Patch product');
+    console.log('Patch product:', id);
     return await this.appService.updateProduct(id, product);
   }
 
@@ -38,7 +54,7 @@ export class ProductsController {
 
   @Delete(':id')
   async deleteProduct(@Param('id') id: number): Promise<void> {
-    console.log('Delete product');
+    console.log('Delete product:', id);
     return await this.appService.deleteProduct(id);
   }
 }
