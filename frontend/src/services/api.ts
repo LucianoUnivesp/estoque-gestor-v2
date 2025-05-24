@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { Product, ProductType, StockMovement, DashboardStats } from '@/interfaces';
+import { Product, ProductType, StockMovement, DashboardStats, PaginatedResponse } from '@/interfaces';
 
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
@@ -19,18 +19,6 @@ interface PaginationParams {
 
 interface ProductSearchParams extends PaginationParams {
     productTypeId?: number;
-}
-
-interface PaginatedResponse<T> {
-    data: T[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-        hasNext: boolean;
-        hasPrev: boolean;
-    };
 }
 
 // Products

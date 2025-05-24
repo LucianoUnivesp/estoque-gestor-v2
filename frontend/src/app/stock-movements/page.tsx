@@ -46,7 +46,7 @@ import {
   useUpdateStockMovement,
   useDeleteStockMovement,
 } from "@/hooks/stock-movements/useStockMovements";
-import { useProducts } from "@/hooks/products/useProducts";
+import { useAllProducts } from "@/hooks/products/useProducts"; // Changed to useAllProducts
 import StockMovementForm from "@/components/stock-movements/StockMovementForm";
 import { StockMovement } from "@/interfaces";
 
@@ -82,7 +82,7 @@ export default function StockMovementsPage() {
     error,
   } = useStockMovements(formatDateForAPI(startDate), formatDateForAPI(endDate));
 
-  const { data: products = [] } = useProducts();
+  const { data: products = [] } = useAllProducts(); // Changed from useProducts to useAllProducts
   const createMutation = useCreateStockMovement();
   const updateMutation = useUpdateStockMovement();
   const deleteMutation = useDeleteStockMovement();

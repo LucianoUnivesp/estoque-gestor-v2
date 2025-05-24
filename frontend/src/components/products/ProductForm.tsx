@@ -1,8 +1,6 @@
-// src/components/products/ProductForm.tsx
 "use client";
 import React, { useEffect } from "react";
 import {
-  Box,
   TextField,
   Button,
   Stack,
@@ -23,9 +21,21 @@ interface ProductFormProps {
   open: boolean;
   initialValues?: Partial<Product>;
   productTypes: ProductType[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (values: any) => void;
   onClose: () => void;
   loading: boolean;
+}
+
+// Internal form state interface
+interface ProductFormState {
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  productTypeId: number | undefined;
+  supplier: string;
+  expirationDate: Date | null; // This is Date for the DatePicker component
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
@@ -36,23 +46,28 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onClose,
   loading,
 }) => {
-  const [formValues, setFormValues] = React.useState<Partial<Product>>({
+  const [formValues, setFormValues] = React.useState<ProductFormState>({
     name: "",
     description: "",
     price: 0,
     quantity: 0,
     productTypeId: undefined,
     supplier: "",
-    expirationDate: undefined,
+    expirationDate: null,
   });
 
   useEffect(() => {
     if (initialValues) {
       setFormValues({
-        ...initialValues,
+        name: initialValues.name || "",
+        description: initialValues.description || "",
+        price: initialValues.price || 0,
+        quantity: initialValues.quantity || 0,
+        productTypeId: initialValues.productTypeId,
+        supplier: initialValues.supplier || "",
         expirationDate: initialValues.expirationDate
           ? new Date(initialValues.expirationDate)
-          : undefined,
+          : null,
       });
     } else {
       setFormValues({
@@ -62,7 +77,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         quantity: 0,
         productTypeId: undefined,
         supplier: "",
-        expirationDate: undefined,
+        expirationDate: null,
       });
     }
   }, [initialValues, open]);
@@ -80,13 +95,27 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const handleDateChange = (date: Date | null) => {
     setFormValues((prev) => ({
       ...prev,
-      expirationDate: date ? date.toISOString() : undefined,
+      expirationDate: date,
     }));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(formValues);
+
+    // Convert form state to API format
+    const submitData: Partial<Product> = {
+      name: formValues.name,
+      description: formValues.description,
+      price: formValues.price,
+      quantity: formValues.quantity,
+      productTypeId: formValues.productTypeId,
+      supplier: formValues.supplier,
+      expirationDate: formValues.expirationDate
+        ? formValues.expirationDate.toISOString()
+        : undefined,
+    };
+
+    onSubmit(submitData);
   };
 
   return (
@@ -109,7 +138,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <TextField
               name="description"
               label="Descrição"
-              value={formValues.description || ""}
+              value={formValues.description}
               onChange={handleChange}
               fullWidth
               multiline
@@ -159,11 +188,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             >
               <DatePicker
                 label="Data de Validade"
-                value={
-                  formValues.expirationDate
-                    ? new Date(formValues.expirationDate)
-                    : null
-                }
+                value={formValues.expirationDate}
                 onChange={handleDateChange}
                 slotProps={{ textField: { fullWidth: true } }}
               />
@@ -171,7 +196,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
             <TextField
               name="supplier"
               label="Fornecedor"
-              value={formValues.supplier || ""}
+              value={formValues.supplier}
               onChange={handleChange}
               fullWidth
             />

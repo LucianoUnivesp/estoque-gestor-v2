@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/product-types/page.tsx - Modern Design with Search & Pagination
 "use client";
 
@@ -45,17 +46,19 @@ import { useAllProducts } from "@/hooks/products/useProducts";
 import ProductTypeForm from "@/components/product-types/ProductTypeForm";
 import SearchBar from "@/components/common/SearchBar";
 import Pagination from "@/components/common/Pagination";
-import { ProductType, Product } from "@/interfaces";
+import { ProductType, Product, isPaginatedResponse } from "@/interfaces";
 
 export default function ProductTypesPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  
+
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editingProductType, setEditingProductType] = useState<ProductType | null>(null);
-  const [deletingProductType, setDeletingProductType] = useState<ProductType | null>(null);
+  const [editingProductType, setEditingProductType] =
+    useState<ProductType | null>(null);
+  const [deletingProductType, setDeletingProductType] =
+    useState<ProductType | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -82,10 +85,15 @@ export default function ProductTypesPage() {
   const updateMutation = useUpdateProductType();
   const deleteMutation = useDeleteProductType();
 
-  // Handle pagination vs non-pagination response
-  const isProductTypesPaginated = productTypesResult && !Array.isArray(productTypesResult);
-  const productTypes = isProductTypesPaginated ? productTypesResult.data : (productTypesResult as ProductType[] || []);
-  const pagination = isProductTypesPaginated ? productTypesResult.pagination : null;
+  // Handle pagination vs non-pagination response with proper type checking
+  const isProductTypesPaginated =
+    productTypesResult && isPaginatedResponse<ProductType>(productTypesResult);
+  const productTypes = isProductTypesPaginated
+    ? productTypesResult.data
+    : (productTypesResult as ProductType[]) || [];
+  const pagination = isProductTypesPaginated
+    ? productTypesResult.pagination
+    : null;
 
   const handleOpenForm = (productType?: ProductType) => {
     setEditingProductType(productType || null);
@@ -121,7 +129,8 @@ export default function ProductTypesPage() {
     } catch (error: any) {
       setSnackbar({
         open: true,
-        message: error.message || "Erro ao salvar tipo de produto. Tente novamente.",
+        message:
+          error.message || "Erro ao salvar tipo de produto. Tente novamente.",
         severity: "error",
       });
     }
@@ -151,7 +160,8 @@ export default function ProductTypesPage() {
     } catch (error: any) {
       setSnackbar({
         open: true,
-        message: error.message || "Erro ao excluir tipo de produto. Tente novamente.",
+        message:
+          error.message || "Erro ao excluir tipo de produto. Tente novamente.",
         severity: "error",
       });
     }
@@ -171,7 +181,9 @@ export default function ProductTypesPage() {
   };
 
   const getProductCountByType = (typeId: number): number => {
-    return allProducts.filter((product: Product) => product.productTypeId === typeId).length;
+    return allProducts.filter(
+      (product: Product) => product.productTypeId === typeId
+    ).length;
   };
 
   if (isLoading) {
@@ -193,9 +205,19 @@ export default function ProductTypesPage() {
   return (
     <Box>
       {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 4 }}
+      >
         <Box>
-          <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color="text.primary"
+            sx={{ mb: 1 }}
+          >
             Tipos de Produto
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -211,11 +233,11 @@ export default function ProductTypesPage() {
             borderRadius: 2,
             px: 3,
             py: 1.5,
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            boxShadow: '0 4px 14px 0 rgb(99 102 241 / 0.3)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-              boxShadow: '0 6px 20px 0 rgb(99 102 241 / 0.4)',
+            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            boxShadow: "0 4px 14px 0 rgb(99 102 241 / 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
+              boxShadow: "0 6px 20px 0 rgb(99 102 241 / 0.4)",
             },
           }}
         >
@@ -228,7 +250,7 @@ export default function ProductTypesPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "primary.main", width: 48, height: 48 }}>
                 <CategoryIcon />
               </Avatar>
               <Box>
@@ -246,7 +268,7 @@ export default function ProductTypesPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "success.main", width: 48, height: 48 }}>
                 <InventoryIcon />
               </Avatar>
               <Box>
@@ -264,12 +286,16 @@ export default function ProductTypesPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'info.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "info.main", width: 48, height: 48 }}>
                 📊
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold" color="text.primary">
-                  {productTypes.length > 0 ? Math.round(allProducts.length / productTypes.length * 10) / 10 : 0}
+                  {productTypes.length > 0
+                    ? Math.round(
+                        (allProducts.length / productTypes.length) * 10
+                      ) / 10
+                    : 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Média por Tipo
@@ -281,7 +307,15 @@ export default function ProductTypesPage() {
       </Stack>
 
       {/* Search */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: 1, borderColor: 'grey.200' }}>
+      <Paper
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: 1,
+          borderColor: "grey.200",
+        }}
+      >
         <SearchBar
           searchValue={search}
           onSearchChange={setSearch}
@@ -291,22 +325,36 @@ export default function ProductTypesPage() {
       </Paper>
 
       {/* Product Types Table */}
-      <TableContainer 
-        component={Paper} 
-        sx={{ 
-          borderRadius: 3, 
-          border: 1, 
-          borderColor: 'grey.200',
-          overflow: 'hidden'
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: 3,
+          border: 1,
+          borderColor: "grey.200",
+          overflow: "hidden",
         }}
       >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Nome</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Descrição</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Produtos</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Ações</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Nome
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Descrição
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Produtos
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Ações
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -314,15 +362,14 @@ export default function ProductTypesPage() {
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
                   <Stack alignItems="center" spacing={2}>
-                    <CategoryIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                    <CategoryIcon sx={{ fontSize: 48, color: "grey.400" }} />
                     <Typography variant="h6" color="text.secondary">
                       Nenhum tipo de produto encontrado
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {search 
-                        ? "Tente ajustar os filtros de busca" 
-                        : "Comece criando seu primeiro tipo de produto"
-                      }
+                      {search
+                        ? "Tente ajustar os filtros de busca"
+                        : "Comece criando seu primeiro tipo de produto"}
                     </Typography>
                   </Stack>
                 </TableCell>
@@ -336,14 +383,14 @@ export default function ProductTypesPage() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       color="text.secondary"
-                      sx={{ 
+                      sx={{
                         maxWidth: 300,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {type.description || "-"}
@@ -352,14 +399,20 @@ export default function ProductTypesPage() {
                   <TableCell align="center">
                     <Box
                       sx={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         minWidth: 32,
                         height: 32,
-                        borderRadius: '50%',
-                        bgcolor: getProductCountByType(type.id) > 0 ? 'primary.50' : 'grey.100',
-                        color: getProductCountByType(type.id) > 0 ? 'primary.main' : 'grey.500',
+                        borderRadius: "50%",
+                        bgcolor:
+                          getProductCountByType(type.id) > 0
+                            ? "primary.50"
+                            : "grey.100",
+                        color:
+                          getProductCountByType(type.id) > 0
+                            ? "primary.main"
+                            : "grey.500",
                         fontWeight: 600,
                       }}
                     >
@@ -373,8 +426,8 @@ export default function ProductTypesPage() {
                           size="small"
                           onClick={() => handleOpenForm(type)}
                           sx={{
-                            color: 'primary.main',
-                            '&:hover': { bgcolor: 'primary.50' }
+                            color: "primary.main",
+                            "&:hover": { bgcolor: "primary.50" },
                           }}
                         >
                           <EditIcon fontSize="small" />
@@ -385,8 +438,8 @@ export default function ProductTypesPage() {
                           size="small"
                           onClick={() => handleOpenDeleteDialog(type)}
                           sx={{
-                            color: 'error.main',
-                            '&:hover': { bgcolor: 'error.50' }
+                            color: "error.main",
+                            "&:hover": { bgcolor: "error.50" },
                           }}
                         >
                           <DeleteIcon fontSize="small" />
@@ -426,7 +479,7 @@ export default function ProductTypesPage() {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
         <DialogTitle sx={{ pb: 2 }}>
@@ -435,21 +488,23 @@ export default function ProductTypesPage() {
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
+          <DialogContentText sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
             Tem certeza de que deseja excluir o tipo de produto{" "}
             <strong>{deletingProductType?.name}</strong>?
             <br />
             <br />
             {getProductCountByType(deletingProductType?.id || 0) > 0 && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
-                Este tipo possui {getProductCountByType(deletingProductType?.id || 0)} produto(s) 
-                associado(s). A exclusão só será possível se não houver produtos vinculados.
+                Este tipo possui{" "}
+                {getProductCountByType(deletingProductType?.id || 0)} produto(s)
+                associado(s). A exclusão só será possível se não houver produtos
+                vinculados.
               </Alert>
             )}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
+          <Button
             onClick={handleCloseDeleteDialog}
             variant="outlined"
             sx={{ borderRadius: 2 }}
@@ -478,10 +533,10 @@ export default function ProductTypesPage() {
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ 
+          sx={{
             width: "100%",
             borderRadius: 2,
-            boxShadow: 3
+            boxShadow: 3,
           }}
         >
           {snackbar.message}

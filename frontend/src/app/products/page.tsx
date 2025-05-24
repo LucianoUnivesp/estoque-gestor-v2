@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/app/products/page.tsx - Modern Design with Search & Pagination
 "use client";
 
@@ -47,14 +48,16 @@ import { useAllProductTypes } from "@/hooks/product-types/useProductTypes";
 import ProductForm from "@/components/products/ProductForm";
 import SearchBar from "@/components/common/SearchBar";
 import Pagination from "@/components/common/Pagination";
-import { Product } from "@/interfaces";
+import { Product, isPaginatedResponse } from "@/interfaces";
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [productTypeFilter, setProductTypeFilter] = useState<number | string>("");
-  
+  const [productTypeFilter, setProductTypeFilter] = useState<number | string>(
+    ""
+  );
+
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -86,9 +89,12 @@ export default function ProductsPage() {
   const updateMutation = useUpdateProduct();
   const deleteMutation = useDeleteProduct();
 
-  // Handle pagination vs non-pagination response
-  const isProductsPaginated = productsResult && !Array.isArray(productsResult);
-  const products = isProductsPaginated ? productsResult.data : (productsResult as Product[] || []);
+  // Handle pagination vs non-pagination response with proper type checking
+  const isProductsPaginated =
+    productsResult && isPaginatedResponse<Product>(productsResult);
+  const products = isProductsPaginated
+    ? productsResult.data
+    : (productsResult as Product[]) || [];
   const pagination = isProductsPaginated ? productsResult.pagination : null;
 
   const handleOpenForm = (product?: Product) => {
@@ -232,9 +238,19 @@ export default function ProductsPage() {
   return (
     <Box>
       {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 4 }}
+      >
         <Box>
-          <Typography variant="h4" fontWeight="bold" color="text.primary" sx={{ mb: 1 }}>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            color="text.primary"
+            sx={{ mb: 1 }}
+          >
             Produtos
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -250,11 +266,11 @@ export default function ProductsPage() {
             borderRadius: 2,
             px: 3,
             py: 1.5,
-            background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-            boxShadow: '0 4px 14px 0 rgb(99 102 241 / 0.3)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
-              boxShadow: '0 6px 20px 0 rgb(99 102 241 / 0.4)',
+            background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+            boxShadow: "0 4px 14px 0 rgb(99 102 241 / 0.3)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)",
+              boxShadow: "0 6px 20px 0 rgb(99 102 241 / 0.4)",
             },
           }}
         >
@@ -267,7 +283,7 @@ export default function ProductsPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "primary.main", width: 48, height: 48 }}>
                 <InventoryIcon />
               </Avatar>
               <Box>
@@ -285,12 +301,12 @@ export default function ProductsPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "warning.main", width: 48, height: 48 }}>
                 <WarningIcon />
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold" color="text.primary">
-                  {products.filter(p => isLowStock(p.quantity)).length}
+                  {products.filter((p) => isLowStock(p.quantity)).length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Estoque Baixo
@@ -303,12 +319,15 @@ export default function ProductsPage() {
         <Card sx={{ flex: 1, borderRadius: 3 }}>
           <CardContent sx={{ p: 3 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
-              <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
+              <Avatar sx={{ bgcolor: "success.main", width: 48, height: 48 }}>
                 <TrendingUpIcon />
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold" color="text.primary">
-                  R$ {products.reduce((sum, p) => sum + (p.price * p.quantity), 0).toFixed(2)}
+                  R${" "}
+                  {products
+                    .reduce((sum, p) => sum + p.price * p.quantity, 0)
+                    .toFixed(2)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Valor Total do Estoque
@@ -320,41 +339,72 @@ export default function ProductsPage() {
       </Stack>
 
       {/* Search and Filters */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, border: 1, borderColor: 'grey.200' }}>
+      <Paper
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: 1,
+          borderColor: "grey.200",
+        }}
+      >
         <SearchBar
           searchValue={search}
           onSearchChange={setSearch}
           placeholder="Buscar produtos por nome..."
           filterValue={productTypeFilter}
           onFilterChange={setProductTypeFilter}
-          filterOptions={allProductTypes.map(type => ({
+          filterOptions={allProductTypes.map((type) => ({
             value: type.id,
-            label: type.name
+            label: type.name,
           }))}
           filterLabel="Tipo"
         />
       </Paper>
 
       {/* Products Table */}
-      <TableContainer 
-        component={Paper} 
-        sx={{ 
-          borderRadius: 3, 
-          border: 1, 
-          borderColor: 'grey.200',
-          overflow: 'hidden'
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: 3,
+          border: 1,
+          borderColor: "grey.200",
+          overflow: "hidden",
         }}
       >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Produto</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Tipo</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Estoque</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Preço</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Fornecedor</TableCell>
-              <TableCell sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Validade</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 600, fontSize: '0.875rem' }}>Ações</TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Produto
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Tipo
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Estoque
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Preço
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Fornecedor
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
+                Validade
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Ações
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -362,15 +412,14 @@ export default function ProductsPage() {
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                   <Stack alignItems="center" spacing={2}>
-                    <InventoryIcon sx={{ fontSize: 48, color: 'grey.400' }} />
+                    <InventoryIcon sx={{ fontSize: 48, color: "grey.400" }} />
                     <Typography variant="h6" color="text.secondary">
                       Nenhum produto encontrado
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {search || productTypeFilter 
-                        ? "Tente ajustar os filtros de busca" 
-                        : "Comece criando seu primeiro produto"
-                      }
+                      {search || productTypeFilter
+                        ? "Tente ajustar os filtros de busca"
+                        : "Comece criando seu primeiro produto"}
                     </Typography>
                   </Stack>
                 </TableCell>
@@ -386,7 +435,11 @@ export default function ProductsPage() {
                           {product.name}
                         </Typography>
                         {product.description && (
-                          <Typography variant="body2" color="text.secondary" noWrap>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                          >
                             {product.description}
                           </Typography>
                         )}
@@ -409,7 +462,7 @@ export default function ProductsPage() {
                           label={stockStatus.label}
                           color={stockStatus.color as any}
                           size="small"
-                          sx={{ fontSize: '0.75rem', height: 20 }}
+                          sx={{ fontSize: "0.75rem", height: 20 }}
                         />
                       </Stack>
                     </TableCell>
@@ -427,14 +480,18 @@ export default function ProductsPage() {
                       {formatExpirationDate(product.expirationDate)}
                     </TableCell>
                     <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="center"
+                      >
                         <Tooltip title="Editar produto">
                           <IconButton
                             size="small"
                             onClick={() => handleOpenForm(product)}
                             sx={{
-                              color: 'primary.main',
-                              '&:hover': { bgcolor: 'primary.50' }
+                              color: "primary.main",
+                              "&:hover": { bgcolor: "primary.50" },
                             }}
                           >
                             <EditIcon fontSize="small" />
@@ -445,8 +502,8 @@ export default function ProductsPage() {
                             size="small"
                             onClick={() => handleOpenDeleteDialog(product)}
                             sx={{
-                              color: 'error.main',
-                              '&:hover': { bgcolor: 'error.50' }
+                              color: "error.main",
+                              "&:hover": { bgcolor: "error.50" },
                             }}
                           >
                             <DeleteIcon fontSize="small" />
@@ -488,7 +545,7 @@ export default function ProductsPage() {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
         <DialogTitle sx={{ pb: 2 }}>
@@ -497,7 +554,7 @@ export default function ProductsPage() {
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ fontSize: '1rem', lineHeight: 1.6 }}>
+          <DialogContentText sx={{ fontSize: "1rem", lineHeight: 1.6 }}>
             Tem certeza de que deseja excluir o produto{" "}
             <strong>{deletingProduct?.name}</strong>?
             <br />
@@ -507,7 +564,7 @@ export default function ProductsPage() {
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
+          <Button
             onClick={handleCloseDeleteDialog}
             variant="outlined"
             sx={{ borderRadius: 2 }}
@@ -536,10 +593,10 @@ export default function ProductsPage() {
         <Alert
           onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ 
+          sx={{
             width: "100%",
             borderRadius: 2,
-            boxShadow: 3
+            boxShadow: 3,
           }}
         >
           {snackbar.message}

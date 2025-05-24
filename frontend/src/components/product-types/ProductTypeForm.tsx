@@ -1,8 +1,7 @@
-// src/components/product-types/ProductTypeForm.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useEffect } from "react";
 import {
-  Box,
   TextField,
   Button,
   Stack,

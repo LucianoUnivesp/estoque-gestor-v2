@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/hooks/products/useProducts.ts - Enhanced with search and pagination
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "@/services/api";
-import { Product } from "@/interfaces";
+import { Product, ProductsResponse, isPaginatedResponse } from "@/interfaces";
 import { validateProduct } from "@/utils/validation";
 
 const PRODUCTS_KEY = "products";
@@ -17,24 +16,23 @@ interface ProductSearchParams {
 }
 
 export const useProducts = (params?: ProductSearchParams) => {
-    return useQuery({
+    return useQuery<ProductsResponse>({
         queryKey: [PRODUCTS_KEY, params],
-        queryFn: async () => {
+        queryFn: async (): Promise<ProductsResponse> => {
             return await api.getProducts(params);
         },
         staleTime: 2 * 60 * 1000, // 2 minutes
-        keepPreviousData: true, // Important for pagination UX
     });
 };
 
 // Hook for getting all products without pagination (for dropdowns, etc.)
 export const useAllProducts = () => {
-    return useQuery({
+    return useQuery<Product[]>({
         queryKey: [PRODUCTS_KEY, 'all'],
         queryFn: async (): Promise<Product[]> => {
             const result = await api.getProducts();
             // If it's paginated, return just the data array, otherwise return as is
-            return Array.isArray(result) ? result : result.data;
+            return isPaginatedResponse<Product>(result) ? result.data : result;
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
