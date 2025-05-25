@@ -138,8 +138,8 @@ CREATE TRIGGER update_products_updated_at
 Execute este script para popular o banco com dados de exemplo de insumos para restaurante:
 
 ```sql
--- Inserir tipos de produtos (categorias de insumos para restaurante)
-INSERT INTO product_types (name, description) VALUES
+-- PASSO 1: Inserir tipos de produtos PRIMEIRO (categorias de insumos para restaurante)
+INSERT INTO product_types (name, description) VALUES 
 ('Proteínas', 'Carnes, peixes e proteínas em geral'),
 ('Vegetais', 'Verduras, legumes e hortaliças'),
 ('Laticínios', 'Leite, queijos e derivados'),
@@ -151,51 +151,51 @@ INSERT INTO product_types (name, description) VALUES
 ('Congelados', 'Produtos congelados diversos'),
 ('Enlatados', 'Conservas e produtos enlatados');
 
--- Inserir produtos de exemplo para restaurante
-INSERT INTO products (name, description, cost_price, sale_price, quantity, supplier, product_type_id, expiration_date) VALUES
--- Proteínas
+-- PASSO 2: Inserir produtos DEPOIS (insumos do restaurante)
+INSERT INTO products (name, description, cost_price, sale_price, quantity, supplier, product_type_id, expiration_date) VALUES 
+-- Proteínas (product_type_id = 1)
 ('Peito de Frango', 'Peito de frango sem osso por kg', 12.50, 25.00, 15, 'Avícola São João', 1, CURRENT_DATE + INTERVAL '5 days'),
 ('Carne Bovina (Alcatra)', 'Alcatra bovina por kg', 28.90, 55.00, 8, 'Frigorífico Premium', 1, CURRENT_DATE + INTERVAL '4 days'),
 ('Salmão', 'Salmão fresco por kg', 45.00, 85.00, 3, 'Peixaria Oceano', 1, CURRENT_DATE + INTERVAL '2 days'),
 ('Camarão Médio', 'Camarão médio limpo por kg', 38.90, 75.00, 2, 'Frutos do Mar Express', 1, CURRENT_DATE + INTERVAL '2 days'),
 
--- Vegetais
+-- Vegetais (product_type_id = 2)
 ('Tomate', 'Tomate para molhos por kg', 4.50, 8.00, 12, 'Hortifruti Central', 2, CURRENT_DATE + INTERVAL '6 days'),
 ('Cebola', 'Cebola branca por kg', 3.20, 6.00, 20, 'Hortifruti Central', 2, CURRENT_DATE + INTERVAL '15 days'),
 ('Alho', 'Alho por kg', 18.50, 35.00, 5, 'Temperos & Cia', 2, CURRENT_DATE + INTERVAL '20 days'),
 ('Batata', 'Batata para pratos por kg', 2.90, 5.50, 25, 'Legumes & Verduras', 2, CURRENT_DATE + INTERVAL '12 days'),
 ('Cenoura', 'Cenoura por kg', 3.80, 7.00, 8, 'Hortifruti Central', 2, CURRENT_DATE + INTERVAL '10 days'),
 
--- Laticínios
+-- Laticínios (product_type_id = 3)
 ('Queijo Mussarela', 'Queijo mussarela para pizzas por kg', 22.50, 40.00, 6, 'Laticínios Bela Vista', 3, CURRENT_DATE + INTERVAL '12 days'),
 ('Creme de Leite', 'Creme de leite 200ml', 3.20, 6.00, 15, 'Laticínios Bela Vista', 3, CURRENT_DATE + INTERVAL '15 days'),
 ('Manteiga', 'Manteiga sem sal 500g', 12.80, 22.00, 8, 'Laticínios Premium', 3, CURRENT_DATE + INTERVAL '25 days'),
 
--- Grãos e Cereais
+-- Grãos e Cereais (product_type_id = 4)
 ('Arroz Agulhinha', 'Arroz tipo 1 para pratos - 5kg', 12.50, 20.00, 10, 'Cereais Brasil', 4, CURRENT_DATE + INTERVAL '180 days'),
 ('Macarrão Espaguete', 'Macarrão espaguete 500g', 2.20, 4.50, 20, 'Massas Italiana', 4, CURRENT_DATE + INTERVAL '90 days'),
 ('Farinha de Trigo', 'Farinha de trigo tipo 1 - 1kg', 3.50, 6.50, 12, 'Moinhos do Vale', 4, CURRENT_DATE + INTERVAL '120 days'),
 
--- Temperos e Condimentos
+-- Temperos e Condimentos (product_type_id = 5)
 ('Sal Refinado', 'Sal refinado 1kg', 1.80, 3.50, 15, 'Temperos & Cia', 5, CURRENT_DATE + INTERVAL '365 days'),
 ('Pimenta do Reino', 'Pimenta do reino moída 100g', 8.50, 15.00, 6, 'Especiarias Premium', 5, CURRENT_DATE + INTERVAL '180 days'),
 ('Orégano', 'Orégano desidratado 50g', 4.20, 8.00, 8, 'Especiarias Premium', 5, CURRENT_DATE + INTERVAL '150 days'),
 
--- Bebidas
+-- Bebidas (product_type_id = 6)
 ('Coca-Cola 2L', 'Refrigerante Coca-Cola 2L', 4.20, 8.50, 24, 'Distribuidora RefriMax', 6, CURRENT_DATE + INTERVAL '90 days'),
 ('Água Mineral', 'Água mineral 500ml', 0.80, 2.00, 48, 'Águas Cristalinas', 6, CURRENT_DATE + INTERVAL '365 days'),
 ('Suco de Laranja', 'Suco natural de laranja 1L', 3.50, 7.50, 12, 'Sucos Naturais', 6, CURRENT_DATE + INTERVAL '5 days'),
 
--- Óleos
+-- Óleos e Gorduras (product_type_id = 7)
 ('Óleo de Soja', 'Óleo de soja para fritura 900ml', 3.90, 7.00, 10, 'Óleos Puros', 7, CURRENT_DATE + INTERVAL '120 days'),
 ('Azeite Extra Virgem', 'Azeite extra virgem 500ml', 18.50, 35.00, 4, 'Importados Premium', 7, CURRENT_DATE + INTERVAL '200 days'),
 
--- Enlatados
+-- Enlatados (product_type_id = 10)
 ('Molho de Tomate', 'Molho de tomate tradicional 340g', 2.80, 5.50, 25, 'Conservas Bom Sabor', 10, CURRENT_DATE + INTERVAL '180 days'),
 ('Azeitona Verde', 'Azeitona verde sem caroço 200g', 4.50, 9.00, 12, 'Conservas Premium', 10, CURRENT_DATE + INTERVAL '365 days');
 
--- Inserir movimentações de exemplo
-INSERT INTO stock_movements (type, quantity, product_id, notes, created_at) VALUES
+-- PASSO 3: Inserir movimentações APÓS inserir os produtos
+INSERT INTO stock_movements (type, quantity, product_id, notes, created_at) VALUES 
 -- Movimentações de hoje
 ('exit', 3, 1, 'Usado no prato do dia - Frango Grelhado', NOW()),
 ('exit', 2, 2, 'Preparo de Steak de Alcatra', NOW() - INTERVAL '2 hours'),
@@ -208,11 +208,11 @@ INSERT INTO stock_movements (type, quantity, product_id, notes, created_at) VALU
 ('entry', 15, 5, 'Compra semanal - Hortifruti Central', NOW() - INTERVAL '1 day' + INTERVAL '1 hour'),
 
 -- Movimentações desta semana
-('exit', 8, 11, 'Pizza Margherita - fim de semana', NOW() - INTERVAL '2 days'),
-('exit', 6, 15, 'Pratos de massa da semana', NOW() - INTERVAL '2 days' + INTERVAL '4 hours'),
-('entry', 20, 15, 'Compra mensal - Massas Italiana', NOW() - INTERVAL '3 days'),
+('exit', 8, 10, 'Pizza Margherita - fim de semana', NOW() - INTERVAL '2 days'),
+('exit', 6, 14, 'Pratos de massa da semana', NOW() - INTERVAL '2 days' + INTERVAL '4 hours'),
+('entry', 20, 14, 'Compra mensal - Massas Italiana', NOW() - INTERVAL '3 days'),
 ('exit', 2, 4, 'Camarão na moranga', NOW() - INTERVAL '3 days' + INTERVAL '2 hours'),
-('entry', 8, 11, 'Reposição - Laticínios Bela Vista', NOW() - INTERVAL '4 days');
+('entry', 8, 10, 'Reposição - Laticínios Bela Vista', NOW() - INTERVAL '4 days');
 ```
 
 ### 4. Configure as variáveis de ambiente
