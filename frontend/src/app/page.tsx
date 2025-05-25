@@ -48,6 +48,7 @@ import {
   useStockTrend,
   useProductTypeDistribution,
 } from "@/hooks/dashboard/useDashboard";
+import { formatCurrency } from "@/utils/currency";
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
@@ -250,43 +251,82 @@ export default function Dashboard() {
         Movimentações de Hoje
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={3}>
           <Card elevation={2}>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Entradas
-              </Typography>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
-                <Typography variant="h5" sx={{ color: "#3f8600" }}>
-                  {dashboardStats?.todayEntries || 0} unidades
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: "#3f8600", mt: 1 }}>
-                R$ {(dashboardStats?.todayEntriesValue || 0).toFixed(2)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card elevation={2}>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Saídas
+                Compras
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
                 <Typography variant="h5" sx={{ color: "#cf1322" }}>
-                  {dashboardStats?.todayExits || 0} unidades
+                  {dashboardStats?.todayPurchases || 0} unidades
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: "#cf1322", mt: 1 }}>
-                R$ {(dashboardStats?.todayExitsValue || 0).toFixed(2)}
+                {formatCurrency(dashboardStats?.todayPurchasesValue || 0)}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={3}>
+          <Card elevation={2}>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                Vendas
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
+                <Typography variant="h5" sx={{ color: "#3f8600" }}>
+                  {dashboardStats?.todaySales || 0} unidades
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: "#3f8600", mt: 1 }}>
+                {formatCurrency(dashboardStats?.todaySalesValue || 0)}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={3}>
+          <Card elevation={2}>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                Lucro do Dia
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {(dashboardStats?.todayProfit || 0) >= 0 ? (
+                  <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
+                ) : (
+                  <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
+                )}
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color:
+                      (dashboardStats?.todayProfit || 0) >= 0
+                        ? "#3f8600"
+                        : "#cf1322",
+                  }}
+                >
+                  {formatCurrency(Math.abs(dashboardStats?.todayProfit || 0))}
+                </Typography>
+              </Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  color:
+                    (dashboardStats?.todayProfit || 0) >= 0
+                      ? "#3f8600"
+                      : "#cf1322",
+                }}
+              >
+                {(dashboardStats?.todayProfitMargin || 0).toFixed(1)}% margem
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={3}>
           <Card elevation={2}>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
@@ -310,24 +350,6 @@ export default function Dashboard() {
                   {dashboardStats?.todayBalance || 0} unidades
                 </Typography>
               </Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  mt: 1,
-                  color:
-                    (dashboardStats?.todayEntriesValue || 0) -
-                      (dashboardStats?.todayExitsValue || 0) >=
-                    0
-                      ? "#3f8600"
-                      : "#cf1322",
-                }}
-              >
-                R${" "}
-                {(
-                  (dashboardStats?.todayEntriesValue || 0) -
-                  (dashboardStats?.todayExitsValue || 0)
-                ).toFixed(2)}
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -353,15 +375,15 @@ export default function Dashboard() {
                     <Line
                       type="monotone"
                       dataKey="entries"
-                      name="Entradas"
-                      stroke="#52c41a"
+                      name="Compras"
+                      stroke="#f5222d"
                       activeDot={{ r: 8 }}
                     />
                     <Line
                       type="monotone"
                       dataKey="exits"
-                      name="Saídas"
-                      stroke="#f5222d"
+                      name="Vendas"
+                      stroke="#52c41a"
                     />
                     <Line
                       type="monotone"
@@ -465,8 +487,8 @@ export default function Dashboard() {
                   <TableCell>{movement.product?.name || "N/A"}</TableCell>
                   <TableCell>
                     <Chip
-                      label={movement.type === "entry" ? "Entrada" : "Saída"}
-                      color={movement.type === "entry" ? "success" : "error"}
+                      label={movement.type === "entry" ? "Compra" : "Venda"}
+                      color={movement.type === "entry" ? "error" : "success"}
                       size="small"
                     />
                   </TableCell>

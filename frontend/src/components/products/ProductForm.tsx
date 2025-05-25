@@ -9,13 +9,16 @@ import {
   DialogContent,
   DialogActions,
   MenuItem,
-  InputAdornment,
+  Box,
+  Typography,
+  Chip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ptBR } from "date-fns/locale";
 import { Product, ProductType } from "@/interfaces";
+import CurrencyInput from "@/components/common/CurrencyInput";
 
 interface ProductFormProps {
   open: boolean;
@@ -31,11 +34,12 @@ interface ProductFormProps {
 interface ProductFormState {
   name: string;
   description: string;
-  price: number;
+  costPrice: number;
+  salePrice: number;
   quantity: number;
   productTypeId: number | undefined;
   supplier: string;
-  expirationDate: Date | null; // This is Date for the DatePicker component
+  expirationDate: Date | null;
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
@@ -49,7 +53,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [formValues, setFormValues] = React.useState<ProductFormState>({
     name: "",
     description: "",
-    price: 0,
+    costPrice: 0,
+    salePrice: 0,
     quantity: 0,
     productTypeId: undefined,
     supplier: "",
@@ -61,7 +66,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setFormValues({
         name: initialValues.name || "",
         description: initialValues.description || "",
-        price: initialValues.price || 0,
+        costPrice: initialValues.costPrice || 0,
+        salePrice: initialValues.salePrice || 0,
         quantity: initialValues.quantity || 0,
         productTypeId: initialValues.productTypeId,
         supplier: initialValues.supplier || "",
@@ -73,7 +79,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setFormValues({
         name: "",
         description: "",
-        price: 0,
+        costPrice: 0,
+        salePrice: 0,
         quantity: 0,
         productTypeId: undefined,
         supplier: "",
@@ -92,6 +99,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setFormValues((prev) => ({ ...prev, [name]: parseFloat(value) || 0 }));
   };
 
+  const handleCostPriceChange = (value: number) => {
+    setFormValues((prev) => ({ ...prev, costPrice: value }));
+  };
+
+  const handleSalePriceChange = (value: number) => {
+    setFormValues((prev) => ({ ...prev, salePrice: value }));
+  };
+
   const handleDateChange = (date: Date | null) => {
     setFormValues((prev) => ({
       ...prev,
@@ -106,7 +121,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
     const submitData: Partial<Product> = {
       name: formValues.name,
       description: formValues.description,
-      price: formValues.price,
+      costPrice: formValues.costPrice,
+      salePrice: formValues.salePrice,
       quantity: formValues.quantity,
       productTypeId: formValues.productTypeId,
       supplier: formValues.supplier,
@@ -117,6 +133,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
     onSubmit(submitData);
   };
+
+  // Calcular margem de lucro
+  const profitValue = formValues.salePrice - formValues.costPrice;
+  const profitMargin =
+    formValues.costPrice > 0 ? (profitValue / formValues.costPrice) * 100 : 0;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -135,6 +156,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               required
               inputProps={{ maxLength: 100 }}
             />
+
             <TextField
               name="description"
               label="Descrição"
@@ -144,6 +166,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               multiline
               rows={4}
             />
+
             <TextField
               name="productTypeId"
               select
@@ -159,20 +182,59 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 </MenuItem>
               ))}
             </TextField>
-            <TextField
-              name="price"
-              label="Preço"
-              type="number"
-              value={formValues.price}
-              onChange={handleNumberChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">R$</InputAdornment>
-                ),
-              }}
-              fullWidth
-              required
-            />
+            {/* Preços lado a lado com componente de moeda */}
+            <Stack direction="row" spacing={2}>
+              <CurrencyInput
+                label="Preço de Custo"
+                value={formValues.costPrice}
+                onChange={handleCostPriceChange}
+                fullWidth
+                required
+                minValue={0}
+                helperText="Valor pago pelo produto"
+              />
+              <CurrencyInput
+                label="Preço de Venda"
+                value={formValues.salePrice}
+                onChange={handleSalePriceChange}
+                fullWidth
+                required
+                minValue={0}
+                helperText="Valor de venda ao cliente"
+              />
+            </Stack>
+            {/* Indicador de lucro */}
+            {formValues.costPrice > 0 && formValues.salePrice > 0 && (
+              <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: 2 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Typography variant="body2">
+                    <strong>Lucro por unidade:</strong> R${" "}
+                    {profitValue.toFixed(2)}
+                  </Typography>
+                  <Chip
+                    label={`${profitMargin.toFixed(1)}% de margem`}
+                    color={
+                      profitMargin > 0
+                        ? "success"
+                        : profitMargin < 0
+                        ? "error"
+                        : "default"
+                    }
+                    size="small"
+                  />
+                </Stack>
+                {profitMargin < 0 && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ mt: 1, display: "block" }}
+                  >
+                    ⚠️ Produto com prejuízo! Preço de venda menor que o custo.
+                  </Typography>
+                )}
+              </Box>
+            )}
+
             <TextField
               name="quantity"
               label="Quantidade"
@@ -181,7 +243,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
               onChange={handleNumberChange}
               fullWidth
               required
+              inputProps={{ min: "0" }}
             />
+
             <LocalizationProvider
               dateAdapter={AdapterDateFns}
               adapterLocale={ptBR}
@@ -193,6 +257,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>
+
             <TextField
               name="supplier"
               label="Fornecedor"

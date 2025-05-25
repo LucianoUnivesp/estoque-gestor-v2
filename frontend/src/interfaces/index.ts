@@ -9,12 +9,15 @@ export interface Product {
     id: number;
     name: string;
     description?: string;
-    price: number;
+    costPrice: number;
+    salePrice: number;
     quantity: number;
     expirationDate?: string;
     supplier?: string;
     productTypeId?: number;
     productType?: ProductType;
+    profitMargin?: number;
+    profitValue?: number;
 }
 
 export interface StockMovement {
@@ -22,7 +25,16 @@ export interface StockMovement {
     type: 'entry' | 'exit';
     quantity: number;
     productId: number;
-    product?: Product;
+    product?: {
+        id: number;
+        name: string;
+        costPrice: number;
+        salePrice: number;
+        productType?: {
+            id: number;
+            name: string;
+        };
+    };
     createdAt: string;
     notes?: string;
 }
@@ -31,11 +43,13 @@ export interface DashboardStats {
     totalProducts: number;
     totalProductTypes: number;
     lowStockProducts: number;
-    todayEntries: number;
-    todayExits: number;
+    todaySales: number; // Mudança: era todayExits
+    todayPurchases: number; // Mudança: era todayEntries
     todayBalance: number;
-    todayEntriesValue: number;
-    todayExitsValue: number;
+    todaySalesValue: number; // Valor total das vendas
+    todayPurchasesValue: number; // Valor total das compras
+    todayProfit: number; // Lucro do dia
+    todayProfitMargin: number; // Margem de lucro do dia em %
 }
 
 export interface ProductTypeDistribution {

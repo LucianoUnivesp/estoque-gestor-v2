@@ -15,8 +15,22 @@ export const validateProduct = (product: any): ValidationError[] => {
         errors.push({ field: 'name', message: 'Nome deve ter no máximo 100 caracteres' });
     }
 
-    if (product.price === undefined || product.price === null || product.price <= 0) {
-        errors.push({ field: 'price', message: 'Preço deve ser maior que zero' });
+    // Validar preço de custo
+    if (product.costPrice === undefined || product.costPrice === null || product.costPrice <= 0) {
+        errors.push({ field: 'costPrice', message: 'Preço de custo deve ser maior que zero' });
+    }
+
+    // Validar preço de venda
+    if (product.salePrice === undefined || product.salePrice === null || product.salePrice <= 0) {
+        errors.push({ field: 'salePrice', message: 'Preço de venda deve ser maior que zero' });
+    }
+
+    // Validar se preço de venda é maior que preço de custo (aviso)
+    if (product.costPrice > 0 && product.salePrice > 0 && product.salePrice < product.costPrice) {
+        errors.push({
+            field: 'salePrice',
+            message: 'Preço de venda menor que custo resultará em prejuízo'
+        });
     }
 
     if (product.quantity === undefined || product.quantity === null || product.quantity < 0) {
@@ -67,7 +81,7 @@ export const validateStockMovement = (movement: any): ValidationError[] => {
     }
 
     if (!movement.type || !['entry', 'exit'].includes(movement.type)) {
-        errors.push({ field: 'type', message: 'Tipo de movimentação é obrigatório e deve ser "entrada" ou "saída"' });
+        errors.push({ field: 'type', message: 'Tipo de movimentação é obrigatório e deve ser "compra" ou "venda"' });
     }
 
     if (!movement.quantity || movement.quantity <= 0) {
@@ -181,4 +195,10 @@ export const validateNumber = (
     }
 
     return errors;
+};
+
+export const calculateProfit = (costPrice: number, salePrice: number) => {
+    const profitValue = salePrice - costPrice;
+    const profitMargin = costPrice > 0 ? (profitValue / costPrice) * 100 : 0;
+    return { profitValue, profitMargin };
 };

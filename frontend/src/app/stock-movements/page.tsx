@@ -26,7 +26,6 @@ import {
   DialogContentText,
   DialogActions,
   Snackbar,
-  // TextField,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -46,7 +45,7 @@ import {
   useUpdateStockMovement,
   useDeleteStockMovement,
 } from "@/hooks/stock-movements/useStockMovements";
-import { useAllProducts } from "@/hooks/products/useProducts"; // Changed to useAllProducts
+import { useAllProducts } from "@/hooks/products/useProducts";
 import StockMovementForm from "@/components/stock-movements/StockMovementForm";
 import { StockMovement } from "@/interfaces";
 
@@ -82,7 +81,7 @@ export default function StockMovementsPage() {
     error,
   } = useStockMovements(formatDateForAPI(startDate), formatDateForAPI(endDate));
 
-  const { data: products = [] } = useAllProducts(); // Changed from useProducts to useAllProducts
+  const { data: products = [] } = useAllProducts();
   const createMutation = useCreateStockMovement();
   const updateMutation = useUpdateStockMovement();
   const deleteMutation = useDeleteStockMovement();
@@ -252,15 +251,15 @@ export default function StockMovementsPage() {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Entradas
+                Compras
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
-                <Typography variant="h5" sx={{ color: "#3f8600" }}>
+                <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
+                <Typography variant="h5" sx={{ color: "#cf1322" }}>
                   {summary.entries} unidades
                 </Typography>
               </Box>
-              <Typography variant="body1" sx={{ mt: 1, color: "#3f8600" }}>
+              <Typography variant="body1" sx={{ mt: 1, color: "#cf1322" }}>
                 R$ {summary.entriesValue.toFixed(2)}
               </Typography>
             </CardContent>
@@ -270,15 +269,15 @@ export default function StockMovementsPage() {
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom>
-                Saídas
+                Vendas
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <ArrowDownIcon sx={{ color: "#cf1322", mr: 1 }} />
-                <Typography variant="h5" sx={{ color: "#cf1322" }}>
+                <ArrowUpIcon sx={{ color: "#3f8600", mr: 1 }} />
+                <Typography variant="h5" sx={{ color: "#3f8600" }}>
                   {summary.exits} unidades
                 </Typography>
               </Box>
-              <Typography variant="body1" sx={{ mt: 1, color: "#cf1322" }}>
+              <Typography variant="body1" sx={{ mt: 1, color: "#3f8600" }}>
                 R$ {summary.exitsValue.toFixed(2)}
               </Typography>
             </CardContent>
@@ -351,8 +350,8 @@ export default function StockMovementsPage() {
                   <TableCell>{movement.product?.name}</TableCell>
                   <TableCell>
                     <Chip
-                      label={movement.type === "entry" ? "Entrada" : "Saída"}
-                      color={movement.type === "entry" ? "success" : "error"}
+                      label={movement.type === "entry" ? "Compra" : "Venda"}
+                      color={movement.type === "entry" ? "error" : "success"}
                       size="small"
                     />
                   </TableCell>
@@ -360,7 +359,10 @@ export default function StockMovementsPage() {
                   <TableCell align="right">
                     R${" "}
                     {(
-                      movement.quantity * (movement.product?.price || 0)
+                      movement.quantity *
+                      (movement.product?.salePrice ||
+                        movement.product?.costPrice ||
+                        0)
                     ).toFixed(2)}
                   </TableCell>
                   <TableCell>

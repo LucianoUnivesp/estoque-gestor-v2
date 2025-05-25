@@ -2,7 +2,6 @@
 "use client";
 import React, { useEffect } from "react";
 import {
-  // Box,
   TextField,
   Button,
   Stack,
@@ -74,10 +73,10 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
     onSubmit(formValues);
   };
 
-  const selectedProduct = products.find(p => p.id === formValues.productId);
-  const isExitWithInsufficientStock = 
-    formValues.type === 'exit' && 
-    selectedProduct && 
+  const selectedProduct = products.find((p) => p.id === formValues.productId);
+  const isExitWithInsufficientStock =
+    formValues.type === "exit" &&
+    selectedProduct &&
     (formValues.quantity || 0) > selectedProduct.quantity;
 
   return (
@@ -90,10 +89,11 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
           <Stack spacing={3}>
             {isEditing && (
               <Alert severity="info">
-                Ao editar uma movimentação, o estoque do produto será ajustado automaticamente.
+                Ao editar uma movimentação, o estoque do produto será ajustado
+                automaticamente.
               </Alert>
             )}
-            
+
             <TextField
               name="productId"
               select
@@ -110,7 +110,7 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
                 </MenuItem>
               ))}
             </TextField>
-            
+
             <TextField
               name="type"
               select
@@ -121,10 +121,10 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               required
               disabled={isEditing} // Não permitir mudança de tipo ao editar
             >
-              <MenuItem value="entry">Entrada</MenuItem>
-              <MenuItem value="exit">Saída</MenuItem>
+              <MenuItem value="entry">Compra (Entrada)</MenuItem>
+              <MenuItem value="exit">Venda (Saída)</MenuItem>
             </TextField>
-            
+
             <TextField
               name="quantity"
               label="Quantidade"
@@ -136,12 +136,12 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
               inputProps={{ min: 1 }}
               error={isExitWithInsufficientStock}
               helperText={
-                isExitWithInsufficientStock 
+                isExitWithInsufficientStock
                   ? `Estoque insuficiente. Disponível: ${selectedProduct?.quantity}`
                   : ""
               }
             />
-            
+
             <TextField
               name="notes"
               label="Observações"
@@ -162,10 +162,13 @@ const StockMovementForm: React.FC<StockMovementFormProps> = ({
             color="primary"
             disabled={loading || isExitWithInsufficientStock}
           >
-            {loading 
-              ? (isEditing ? "Atualizando..." : "Salvando...") 
-              : (isEditing ? "Atualizar" : "Salvar")
-            }
+            {loading
+              ? isEditing
+                ? "Atualizando..."
+                : "Salvando..."
+              : isEditing
+              ? "Atualizar"
+              : "Salvar"}
           </Button>
         </DialogActions>
       </form>

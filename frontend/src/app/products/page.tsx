@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/app/products/page.tsx - Modern Design with Search & Pagination
+// src/app/products/page.tsx - Updated with Cost/Sale Price
 "use client";
 
 import { useState } from "react";
@@ -49,6 +49,7 @@ import ProductForm from "@/components/products/ProductForm";
 import SearchBar from "@/components/common/SearchBar";
 import Pagination from "@/components/common/Pagination";
 import { Product, isPaginatedResponse } from "@/interfaces";
+import { formatCurrency } from "@/utils/currency";
 
 export default function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -177,7 +178,7 @@ export default function ProductsPage() {
 
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
-    setPage(1); // Reset to first page when changing limit
+    setPage(1);
   };
 
   const isLowStock = (quantity: number) => quantity <= 5;
@@ -217,6 +218,14 @@ export default function ProductsPage() {
     if (quantity <= 5) return { color: "warning", label: "Estoque baixo" };
     if (quantity <= 20) return { color: "info", label: "Estoque normal" };
     return { color: "success", label: "Estoque alto" };
+  };
+
+  const getProfitStatus = (profitMargin?: number) => {
+    if (!profitMargin) return { color: "default", label: "N/A" };
+    if (profitMargin < 0) return { color: "error", label: "Prejuízo" };
+    if (profitMargin < 10) return { color: "warning", label: "Baixo" };
+    if (profitMargin < 30) return { color: "info", label: "Médio" };
+    return { color: "success", label: "Alto" };
   };
 
   if (isLoading) {
@@ -324,13 +333,12 @@ export default function ProductsPage() {
               </Avatar>
               <Box>
                 <Typography variant="h4" fontWeight="bold" color="text.primary">
-                  R${" "}
-                  {products
-                    .reduce((sum, p) => sum + p.price * p.quantity, 0)
-                    .toFixed(2)}
+                  {formatCurrency(
+                    products.reduce((sum, p) => sum + (p.salePrice || 0) * p.quantity, 0)
+                  )}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Valor Total do Estoque
+                  Valor Total (Venda)
                 </Typography>
               </Box>
             </Stack>
@@ -391,7 +399,19 @@ export default function ProductsPage() {
                 align="right"
                 sx={{ fontWeight: 600, fontSize: "0.875rem" }}
               >
-                Preço
+                Preço Custo
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Preço Venda
+              </TableCell>
+              <TableCell
+                align="center"
+                sx={{ fontWeight: 600, fontSize: "0.875rem" }}
+              >
+                Margem
               </TableCell>
               <TableCell sx={{ fontWeight: 600, fontSize: "0.875rem" }}>
                 Fornecedor
@@ -410,7 +430,7 @@ export default function ProductsPage() {
           <TableBody>
             {products.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                   <Stack alignItems="center" spacing={2}>
                     <InventoryIcon sx={{ fontSize: 48, color: "grey.400" }} />
                     <Typography variant="h6" color="text.secondary">
@@ -427,6 +447,7 @@ export default function ProductsPage() {
             ) : (
               products.map((product) => {
                 const stockStatus = getStockStatus(product.quantity);
+                const profitStatus = getProfitStatus(product.profitMargin);
                 return (
                   <TableRow key={product.id} hover>
                     <TableCell>
@@ -467,9 +488,29 @@ export default function ProductsPage() {
                       </Stack>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="body1" fontWeight={500}>
-                        R$ {product.price.toFixed(2)}
+                      <Typography variant="body2" color="text.secondary">
+                        {formatCurrency(product.costPrice || 0)}
                       </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="body1" fontWeight={500}>
+                        {formatCurrency(product.salePrice || 0)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Stack alignItems="center" spacing={1}>
+                        <Typography variant="body2" fontWeight={500}>
+                          {product.profitMargin
+                            ? `${product.profitMargin.toFixed(1)}%`
+                            : "N/A"}
+                        </Typography>
+                        <Chip
+                          label={profitStatus.label}
+                          color={profitStatus.color as any}
+                          size="small"
+                          sx={{ fontSize: "0.75rem", height: 20 }}
+                        />
+                      </Stack>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
