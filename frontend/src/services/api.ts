@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Product, ProductType, StockMovement, DashboardStats, PaginatedResponse, ProductTypeDistribution } from '@/interfaces';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3001/api',
+    baseURL: 'https://estoque-gestor-v2-backend-1.onrender.com/api',
     headers: {
         'Content-Type': 'application/json',
     },
