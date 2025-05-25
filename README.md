@@ -2,6 +2,8 @@
 
 Sistema web completo de gestão de estoque desenvolvido com Next.js (frontend) e NestJS (backend), integrado com Supabase. Especialmente projetado para otimizar o gerenciamento de insumos alimentícios em restaurantes, reduzir desperdícios e melhorar o planejamento de compras.
 
+https://estoque-gestor-v2-frontend.vercel.app/products
+
 ## 📖 Resumo do Projeto
 
 Este documento apresenta o desenvolvimento de um software web destinado ao controle de estoque para restaurantes. O sistema visa otimizar o gerenciamento de insumos, reduzir desperdícios e melhorar o planejamento de compras. Os objetivos principais incluem a criação de uma interface intuitiva, implementação de funcionalidades para monitoramento preciso do estoque, geração de relatórios e integração com o processo de compras. O projeto utiliza tecnologias web modernas e práticas de desenvolvimento ágil para criar uma solução eficiente e adaptável às necessidades específicas do setor de restaurantes.
