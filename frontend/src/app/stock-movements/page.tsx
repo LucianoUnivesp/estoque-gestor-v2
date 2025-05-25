@@ -48,6 +48,7 @@ import {
 import { useAllProducts } from "@/hooks/products/useProducts";
 import StockMovementForm from "@/components/stock-movements/StockMovementForm";
 import { StockMovement } from "@/interfaces";
+import { formatCurrency } from "@/utils/currency";
 
 export default function StockMovementsPage() {
   const [formOpen, setFormOpen] = useState(false);
@@ -178,6 +179,35 @@ export default function StockMovementsPage() {
     setEndDate(null);
   };
 
+  // Função para calcular o valor da movimentação
+  const calculateMovementValue = (movement: StockMovement): number => {
+    if (!movement.product) return 0;
+
+    // Para vendas (exit), usa preço de venda
+    // Para compras (entry), usa preço de custo
+    const unitPrice =
+      movement.type === "exit"
+        ? movement.product.salePrice
+        : movement.product.costPrice;
+
+    return movement.quantity * (unitPrice || 0);
+  };
+
+  // Função para formatar data brasileira
+  const formatDateBR = (dateString: string): string => {
+    try {
+      return new Date(dateString).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "Data inválida";
+    }
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
@@ -260,7 +290,7 @@ export default function StockMovementsPage() {
                 </Typography>
               </Box>
               <Typography variant="body1" sx={{ mt: 1, color: "#cf1322" }}>
-                R$ {summary.entriesValue.toFixed(2)}
+                {formatCurrency(summary.entriesValue)}
               </Typography>
             </CardContent>
           </Card>
@@ -278,7 +308,7 @@ export default function StockMovementsPage() {
                 </Typography>
               </Box>
               <Typography variant="body1" sx={{ mt: 1, color: "#3f8600" }}>
-                R$ {summary.exitsValue.toFixed(2)}
+                {formatCurrency(summary.exitsValue)}
               </Typography>
             </CardContent>
           </Card>
@@ -309,12 +339,12 @@ export default function StockMovementsPage() {
                 sx={{
                   mt: 1,
                   color:
-                    summary.entriesValue - summary.exitsValue >= 0
+                    summary.exitsValue - summary.entriesValue >= 0
                       ? "#3f8600"
                       : "#cf1322",
                 }}
               >
-                R$ {(summary.entriesValue - summary.exitsValue).toFixed(2)}
+                {formatCurrency(summary.exitsValue - summary.entriesValue)}
               </Typography>
             </CardContent>
           </Card>
@@ -357,23 +387,9 @@ export default function StockMovementsPage() {
                   </TableCell>
                   <TableCell align="right">{movement.quantity}</TableCell>
                   <TableCell align="right">
-                    R${" "}
-                    {(
-                      movement.quantity *
-                      (movement.product?.salePrice ||
-                        movement.product?.costPrice ||
-                        0)
-                    ).toFixed(2)}
+                    {formatCurrency(calculateMovementValue(movement))}
                   </TableCell>
-                  <TableCell>
-                    {new Date(movement.createdAt).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </TableCell>
+                  <TableCell>{formatDateBR(movement.createdAt)}</TableCell>
                   <TableCell>{movement.notes || "-"}</TableCell>
                   <TableCell>
                     <IconButton

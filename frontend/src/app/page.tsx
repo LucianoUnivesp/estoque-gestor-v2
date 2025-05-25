@@ -264,7 +264,7 @@ export default function Dashboard() {
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: "#cf1322", mt: 1 }}>
-                {formatCurrency(dashboardStats?.todayPurchasesValue || 0)}
+                -{formatCurrency(dashboardStats?.todayPurchasesValue || 0)}
               </Typography>
             </CardContent>
           </Card>

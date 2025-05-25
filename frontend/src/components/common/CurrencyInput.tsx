@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // frontend/src/components/common/CurrencyInput.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { TextField, TextFieldProps, InputAdornment } from "@mui/material";
-import { applyCurrencyMask, currencyInputToNumber } from "@/utils/currency";
 
 interface CurrencyInputProps
   extends Omit<TextFieldProps, "value" | "onChange"> {
@@ -25,11 +25,37 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
   const [displayValue, setDisplayValue] = useState("");
   const [focused, setFocused] = useState(false);
 
-  // Sincronizar valor inicial
+  // Função para formatar valor como moeda brasileira
+  const formatCurrency = (numValue: number): string => {
+    if (numValue === 0) return "";
+
+    return new Intl.NumberFormat("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+    }).format(numValue);
+  };
+
+  // Função para converter string formatada para número
+  const parseCurrencyString = (str: string): number => {
+    if (!str || str.trim() === "") return 0;
+
+    // Remove tudo exceto números e vírgula
+    const cleanStr = str.replace(/[^\d,]/g, "");
+
+    if (!cleanStr) return 0;
+
+    // Converte vírgula para ponto decimal
+    const normalizedStr = cleanStr.replace(",", ".");
+    const numValue = parseFloat(normalizedStr);
+
+    return isNaN(numValue) ? 0 : numValue;
+  };
+
+  // Sincronizar valor inicial e quando não focado
   useEffect(() => {
-    if (!focused && value !== undefined) {
-      const formattedValue =
-        value === 0 ? "" : applyCurrencyMask((value * 100).toString());
+    if (!focused) {
+      const formattedValue = formatCurrency(value || 0);
       setDisplayValue(formattedValue);
     }
   }, [value, focused]);
@@ -38,17 +64,39 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
     const inputValue = event.target.value;
 
     // Se o input estiver vazio, permite
-    if (!inputValue) {
+    if (!inputValue || inputValue.trim() === "") {
       setDisplayValue("");
       onChange(0);
       return;
     }
 
-    // Aplica a máscara
-    const maskedValue = applyCurrencyMask(inputValue);
+    // Permite apenas números, vírgula e ponto
+    const allowedChars = /^[\d.,\s]*$/;
+    if (!allowedChars.test(inputValue)) {
+      return; // Não permite caracteres inválidos
+    }
+
+    // Remove espaços e pontos de separação de milhares, mantém apenas a última vírgula
+    let cleanValue = inputValue.replace(/\s/g, ""); // Remove espaços
+
+    // Se tem múltiplas vírgulas, mantém apenas a última
+    const commaIndex = cleanValue.lastIndexOf(",");
+    if (commaIndex !== -1) {
+      const beforeComma = cleanValue
+        .substring(0, commaIndex)
+        .replace(/[,.]/g, "");
+      const afterComma = cleanValue
+        .substring(commaIndex + 1)
+        .replace(/[,.]/g, "")
+        .substring(0, 2);
+      cleanValue = beforeComma + "," + afterComma;
+    } else {
+      // Remove pontos se não há vírgula (são separadores de milhares)
+      cleanValue = cleanValue.replace(/\./g, "");
+    }
 
     // Converte para número
-    const numericValue = currencyInputToNumber(maskedValue);
+    const numericValue = parseCurrencyString(cleanValue);
 
     // Validações
     if (!allowNegative && numericValue < 0) {
@@ -59,34 +107,38 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
       return;
     }
 
-    if (minValue !== undefined && numericValue < minValue) {
-      // Permite digitação mesmo se for menor que o mínimo
-      // A validação final será feita no submit
+    // Formata o valor para exibição durante a digitação
+    let formattedForDisplay = cleanValue;
+
+    // Se não está focado ou perdeu o foco, formata completamente
+    if (!focused && numericValue > 0) {
+      formattedForDisplay = formatCurrency(numericValue);
     }
 
-    setDisplayValue(maskedValue);
+    setDisplayValue(formattedForDisplay);
     onChange(numericValue);
   };
 
   const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
     setFocused(true);
+    // No foco, mostra o valor limpo para edição mais fácil
+    if (value > 0) {
+      const cleanForEdit = value.toFixed(2).replace(".", ",");
+      setDisplayValue(cleanForEdit);
+    }
     textFieldProps.onFocus?.(event);
   };
 
   const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
     setFocused(false);
-
-    // Reaplica a formatação ao perder o foco
-    if (value !== undefined && value !== 0) {
-      const formattedValue = applyCurrencyMask((value * 100).toString());
-      setDisplayValue(formattedValue);
-    }
-
+    // No blur, formata completamente
+    const formattedValue = formatCurrency(value || 0);
+    setDisplayValue(formattedValue);
     textFieldProps.onBlur?.(event);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    // Permite apenas números, backspace, delete, tab, escape, enter, e teclas de navegação
+    // Permite apenas números, backspace, delete, tab, escape, enter, vírgula e teclas de navegação
     const allowedKeys = [
       "Backspace",
       "Delete",
@@ -99,6 +151,8 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
       "ArrowRight",
       "ArrowUp",
       "ArrowDown",
+      ",",
+      ".",
     ];
 
     const isNumber = /^[0-9]$/.test(event.key);
@@ -125,8 +179,8 @@ const CurrencyInput: React.FC<CurrencyInputProps> = ({
         ...textFieldProps.InputProps,
       }}
       inputProps={{
-        inputMode: "numeric",
-        pattern: "[0-9]*",
+        inputMode: "decimal",
+        autoComplete: "off",
         ...textFieldProps.inputProps,
       }}
     />
