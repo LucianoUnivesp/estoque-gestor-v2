@@ -3,7 +3,7 @@ import { AppService } from 'src/servicecs/app.service';
 
 @Controller('api/dashboard')
 export class DashboardController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get('stats')
   async getDashboardStats() {
@@ -21,5 +21,11 @@ export class DashboardController {
   async getStockTrend() {
     console.log('Get stock trend');
     return await this.appService.getStockTrend();
+  }
+
+  @Get('product-type-distribution')
+  async getProductTypeDistribution() {
+    console.log('Get product type distribution');
+    return await this.appService.getProductTypeDistribution();
   }
 }

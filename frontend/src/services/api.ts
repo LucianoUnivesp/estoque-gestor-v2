@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from 'axios';
-import { Product, ProductType, StockMovement, DashboardStats, PaginatedResponse } from '@/interfaces';
+import { Product, ProductType, StockMovement, DashboardStats, PaginatedResponse, ProductTypeDistribution } from '@/interfaces';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    baseURL: 'http://localhost:3001/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -132,6 +132,11 @@ export async function getStockTrend(): Promise<any[]> {
 
 export async function getRecentMovements(): Promise<any[]> {
     const response = await api.get('/dashboard/recent-movements');
+    return response.data;
+}
+
+export async function getProductTypeDistribution(): Promise<ProductTypeDistribution[]> {
+    const response = await api.get('/dashboard/product-type-distribution');
     return response.data;
 }
 

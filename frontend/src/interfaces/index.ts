@@ -38,6 +38,13 @@ export interface DashboardStats {
     todayExitsValue: number;
 }
 
+export interface ProductTypeDistribution {
+    id: number;
+    name: string;
+    value: number;
+    percentage: number;
+}
+
 // New interfaces for API responses
 export interface PaginatedResponse<T> {
     data: T[];

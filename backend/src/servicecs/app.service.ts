@@ -976,4 +976,66 @@ export class AppService {
       );
     }
   }
+
+  async getProductTypeDistribution() {
+    try {
+      // Buscar todos os tipos de produto primeiro
+      const { data: productTypes, error: typesError } = await this.supabaseService.client
+        .from('product_types')
+        .select('id, name');
+
+      if (typesError) throw typesError;
+
+      // Buscar todos os produtos com seus tipos
+      const { data: products, error: productsError } = await this.supabaseService.client
+        .from('products')
+        .select('product_type_id');
+
+      if (productsError) throw productsError;
+
+      // Se não há produtos, retorna array vazio
+      if (!products || products.length === 0) {
+        return [];
+      }
+
+      // Criar um mapa de tipos para fácil acesso
+      const typeMap = new Map();
+      productTypes.forEach(type => {
+        typeMap.set(type.id, type.name);
+      });
+
+      // Contar produtos por tipo
+      const distribution = {};
+      products.forEach(product => {
+        const typeId = product.product_type_id;
+        if (typeId && typeMap.has(typeId)) {
+          if (!distribution[typeId]) {
+            distribution[typeId] = {
+              id: typeId,
+              name: typeMap.get(typeId),
+              count: 0
+            };
+          }
+          distribution[typeId].count++;
+        }
+      });
+
+      // Convert to array and calculate percentages
+      const distributionArray = Object.values(distribution).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        value: item.count,
+        percentage: Math.round((item.count / products.length) * 100)
+      }));
+
+      // Sort by count descending
+      distributionArray.sort((a: any, b: any) => b.value - a.value);
+
+      return distributionArray;
+    } catch (error) {
+      throw new BadRequestException(
+        `Erro ao buscar distribuição por tipo: ${error.message}`,
+      );
+    }
+  }
 }

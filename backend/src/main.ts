@@ -17,9 +17,6 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Set global prefix for API routes
-  app.setGlobalPrefix('api');
-
   const port = process.env.PORT || 3001;
   await app.listen(port);
 }

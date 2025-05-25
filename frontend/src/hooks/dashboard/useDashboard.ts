@@ -2,12 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import * as api from "@/services/api";
-import { DashboardStats } from "@/interfaces";
+import { DashboardStats, ProductTypeDistribution } from "@/interfaces";
 
 // Cache keys
 const DASHBOARD_STATS_KEY = "dashboard-stats";
 const RECENT_MOVEMENTS_KEY = "recent-movements";
 const STOCK_TREND_KEY = "stock-trend";
+const PRODUCT_TYPE_DISTRIBUTION_KEY = "product-type-distribution";
 
 export const useDashboardStats = () => {
     return useQuery({
@@ -36,6 +37,17 @@ export const useStockTrend = () => {
         queryKey: [STOCK_TREND_KEY],
         queryFn: async () => {
             return await api.getStockTrend();
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 2,
+    });
+};
+
+export const useProductTypeDistribution = () => {
+    return useQuery({
+        queryKey: [PRODUCT_TYPE_DISTRIBUTION_KEY],
+        queryFn: async (): Promise<ProductTypeDistribution[]> => {
+            return await api.getProductTypeDistribution();
         },
         staleTime: 5 * 60 * 1000, // 5 minutes
         retry: 2,

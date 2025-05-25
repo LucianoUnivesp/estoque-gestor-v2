@@ -46,6 +46,7 @@ import {
   useDashboardStats,
   useRecentMovements,
   useStockTrend,
+  useProductTypeDistribution,
 } from "@/hooks/dashboard/useDashboard";
 
 export default function Dashboard() {
@@ -78,10 +79,18 @@ export default function Dashboard() {
     refetch: refetchTrend,
   } = useStockTrend();
 
+  const {
+    data: productTypeDistribution = [],
+    isLoading: distributionLoading,
+    error: distributionError,
+    refetch: refetchDistribution,
+  } = useProductTypeDistribution();
+
   const handleRefresh = () => {
     refetchStats();
     refetchMovements();
     refetchTrend();
+    refetchDistribution();
   };
 
   const formatDate = (dateString: string) => {
@@ -100,16 +109,24 @@ export default function Dashboard() {
     }
   };
 
-  // Mock data for pie chart (since we don't have this endpoint yet)
-  const productTypeDistribution = [
-    { name: "Eletrônicos", value: 12 },
-    { name: "Computadores", value: 8 },
-    { name: "Periféricos", value: 5 },
+  // Enhanced color palette for pie chart
+  const PIE_COLORS = [
+    "#6366F1", // Primary indigo
+    "#8B5CF6", // Purple
+    "#06B6D4", // Cyan
+    "#10B981", // Emerald
+    "#F59E0B", // Amber
+    "#EF4444", // Red
+    "#EC4899", // Pink
+    "#84CC16", // Lime
   ];
 
-  const PIE_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
+  const isLoading =
+    statsLoading || movementsLoading || trendLoading || distributionLoading;
+  const hasError =
+    statsError || movementsError || trendError || distributionError;
 
-  if (statsLoading || movementsLoading || trendLoading) {
+  if (isLoading) {
     return (
       <Box
         sx={{
@@ -124,7 +141,7 @@ export default function Dashboard() {
     );
   }
 
-  if (statsError || movementsError || trendError) {
+  if (hasError) {
     return (
       <Alert severity="error">
         Erro ao carregar dados do dashboard. Tente novamente.
@@ -365,30 +382,54 @@ export default function Dashboard() {
             </Typography>
             <Card elevation={2} sx={{ p: 2 }}>
               <Box sx={{ height: 300 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={productTypeDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
-                      }
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {productTypeDistribution.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={PIE_COLORS[index % PIE_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip />
-                  </PieChart>
-                </ResponsiveContainer>
+                {productTypeDistribution.length === 0 ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: "100%",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <CategoryIcon
+                      sx={{ fontSize: 48, color: "grey.400", mb: 2 }}
+                    />
+                    <Typography variant="body1" color="text.secondary">
+                      Nenhum produto cadastrado
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={productTypeDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percentage }) =>
+                          `${name} ${percentage}%`
+                        }
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {productTypeDistribution.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={PIE_COLORS[index % PIE_COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip
+                        formatter={(value: any, name: any) => [
+                          `${value} produtos`,
+                          name,
+                        ]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </Box>
             </Card>
           </Grid>
