@@ -1,20 +1,32 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const environment = process.env.NODE_ENV
-
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  
+  // Enable CORS for production
   app.enableCors({
-    origin: process.env.NODE_ENV === 'development'
-      ? true  // Permite qualquer origem em desenvolvimento.
-      : 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'https://estoque-gestor-v2-frontend.vercel.app',
+      /^https:\/\/.*\.vercel\.app$/,
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   });
 
-  await app.listen(process.env.PORT ?? 3001);
+  // Set global prefix for API routes
+  app.setGlobalPrefix('api');
+
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
 }
 
-bootstrap();
+// For Vercel serverless deployment
+if (process.env.NODE_ENV === 'production') {
+  module.exports = bootstrap;
+} else {
+  bootstrap();
+}
