@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Product, ProductType, StockMovement, DashboardStats, PaginatedResponse, ProductTypeDistribution } from '@/interfaces';
 
 const api = axios.create({
-    baseURL: 'https://estoque-gestor-v2-backend-1.onrender.com/api',
+    baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api',
     headers: {
         'Content-Type': 'application/json',
     },
